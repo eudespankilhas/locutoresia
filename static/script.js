@@ -17,11 +17,20 @@ let currentVoices = [...voicesDatabase];
 let selectedVoice = null;
 
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Locutores IA - Inicializando...');
+    console.log('Total de vozes no banco:', voicesDatabase.length);
+
     renderVoices(currentVoices);
     populateVoiceSelect();
     updateStats();
     loadElevenLabsVoices();
-    document.getElementById('audioFileInput').addEventListener('change', handleAudioFileSelect);
+
+    const audioInput = document.getElementById('audioFileInput');
+    if (audioInput) {
+        audioInput.addEventListener('change', handleAudioFileSelect);
+    }
+
+    console.log('✅ Locutores IA - Inicialização completa!');
 });
 
 // ── Carregar vozes ElevenLabs ──────────────────────────────────────────────
@@ -94,6 +103,13 @@ function createVoiceCard(voice) {
 // ── Populate select agrupado ───────────────────────────────────────────────
 function populateVoiceSelect() {
     const select = document.getElementById('voiceSelect');
+    if (!select) {
+        console.error('ERRO: Elemento voiceSelect não encontrado!');
+        return;
+    }
+
+    console.log('Populando voiceSelect com', voicesDatabase.length, 'vozes Edge TTS');
+
     select.innerHTML = '<option value="">Selecione uma voz</option>';
 
     // Grupo Edge TTS
@@ -106,6 +122,7 @@ function populateVoiceSelect() {
         edgeGroup.appendChild(opt);
     });
     select.appendChild(edgeGroup);
+    console.log('Grupo Edge TTS adicionado com', voicesDatabase.length, 'vozes');
 
     // Grupo ElevenLabs
     if (elevenLabsVoices.length > 0) {
@@ -118,7 +135,10 @@ function populateVoiceSelect() {
             elGroup.appendChild(opt);
         });
         select.appendChild(elGroup);
+        console.log('Grupo ElevenLabs adicionado com', elevenLabsVoices.length, 'vozes');
     }
+
+    console.log('VoiceSelect populado com sucesso!');
 }
 
 // ── Selecionar voz ─────────────────────────────────────────────────────────
