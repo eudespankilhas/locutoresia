@@ -2,3 +2,5 @@ flask==2.3.3
 google-genai==1.70.0
 python-dotenv==1.0.0
 requests==2.32.2
+gunicorn==21.2.0
+Werkzeug==2.3.7
