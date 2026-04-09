@@ -3,10 +3,7 @@
   "builds": [
     {
       "src": "backend/app.py",
-      "use": "@vercel/python",
-      "config": {
-        "maxLambdaSize": "15mb"
-      }
+      "use": "@vercel/python"
     }
   ],
   "routes": [
@@ -18,9 +15,5 @@
       "src": "/(.*)",
       "dest": "backend/app.py"
     }
-  ],
-  "env": {
-    "FLASK_ENV": "production",
-    "FLASK_DEBUG": "False"
-  }
+  ]
 }
