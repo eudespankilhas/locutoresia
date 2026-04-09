@@ -182,6 +182,24 @@ def not_found(error):
 def internal_error(error):
     return jsonify({'error': 'Erro interno do servidor'}), 500
 
+# Handler para Vercel serverless
+from flask import Flask
+
+# Garantir que os paths estão corretos para Vercel
+if os.environ.get('VERCEL'):
+    # Em produção no Vercel, ajustar paths
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    app.template_folder = os.path.join(base_dir, 'templates')
+    app.static_folder = os.path.join(base_dir, 'static')
+    app.config['UPLOAD_FOLDER'] = '/tmp/generated_audio'
+    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+def handler(request, response):
+    """Handler para Vercel serverless functions"""
+    with app.request_context(request.environ):
+        return app(request.environ, response)
+
+# Para desenvolvimento local
 if __name__ == '__main__':
     print("Iniciando Locutores IA Server...")
     print("Acesse: http://localhost:5000")
