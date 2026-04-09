@@ -1636,7 +1636,7 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="/static/script.js?v=3"></script>
+    <script src="/static/script.js?v=4"></script>
     <script src="/static/minidaw-integrated.js?v=3"></script>
     <script>
         // Inicializar MiniDAW quando a página carregar
@@ -1644,6 +1644,37 @@
         document.addEventListener('DOMContentLoaded', function() {
             miniDAW = new MiniDAWIntegrated();
         });
+
+        // Fallback: Garantir que o dropdown de vozes seja preenchido
+        (function populateVoiceSelectFallback() {
+            const select = document.getElementById('voiceSelect');
+            if (!select || select.options.length > 1) return;
+
+            const voices = [
+                { id: 1, name: "Antonio - Profissional" },
+                { id: 2, name: "Francisca - Amigável" },
+                { id: 3, name: "Duarte - Lisboa" },
+                { id: 4, name: "Raquel - Lisboa" },
+                { id: 5, name: "Guy - English US" },
+                { id: 6, name: "Jenny - English US" },
+                { id: 7, name: "Ryan - English UK" },
+                { id: 8, name: "Alvaro - Español" },
+                { id: 9, name: "Henri - Français" },
+                { id: 10, name: "Conrad - Deutsch" }
+            ];
+
+            select.innerHTML = '<option value="">Selecione uma voz</option>';
+            const group = document.createElement('optgroup');
+            group.label = '🟢 Edge TTS (Gratuito)';
+            voices.forEach(v => {
+                const opt = document.createElement('option');
+                opt.value = v.id;
+                opt.textContent = v.name;
+                group.appendChild(opt);
+            });
+            select.appendChild(group);
+            console.log('✅ Dropdown de vozes preenchido (fallback)');
+        })();
     </script>
 </body>
 </html>
