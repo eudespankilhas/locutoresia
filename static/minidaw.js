@@ -309,6 +309,27 @@ class MiniDAW {
     }
 
     createTrackNodes(track) {
+        // Create effect nodes
+        const eqNode = this.audioContext.createBiquadFilter();
+        eqNode.type = 'peaking';
+        eqNode.frequency.value = 1000;
+        eqNode.gain.value = 0;
+        eqNode.Q.value = 1;
+
+        const compressorNode = this.audioContext.createDynamicsCompressor();
+        compressorNode.threshold.value = -24;
+        compressorNode.knee.value = 30;
+        compressorNode.ratio.value = 12;
+        compressorNode.attack.value = 0.003;
+        compressorNode.release.value = 0.25;
+
+        const reverbNode = this.audioContext.createConvolver();
+        this.createReverbImpulse(reverbNode);
+        reverbNode.normalize = true;
+
+        const reverbGain = this.audioContext.createGain();
+        reverbGain.gain.value = 0.3;
+
         // Create gain node
         const gainNode = this.audioContext.createGain();
         gainNode.gain.value = track.volume / 100;
@@ -317,16 +338,61 @@ class MiniDAW {
         const panNode = this.audioContext.createStereoPanner();
         panNode.pan.value = track.pan;
         
-        // Connect nodes
+        // Connect nodes: input -> EQ -> Compressor -> Gain -> Pan -> Master
+        // Reverb is parallel: Compressor -> Reverb -> ReverbGain -> Pan
+        eqNode.connect(compressorNode);
+        compressorNode.connect(gainNode);
+        compressorNode.connect(reverbNode);
+        reverbNode.connect(reverbGain);
+        reverbGain.connect(panNode);
         gainNode.connect(panNode);
         panNode.connect(this.masterGain);
         
         // Store nodes
         this.trackNodes.set(track.id, {
+            inputNode: eqNode,
+            eqNode,
+            compressorNode,
+            reverbNode,
+            reverbGain,
             gainNode,
             panNode,
             sourceNode: null
         });
+
+        // Apply initial effect states
+        this.applyEffectStates(track);
+    }
+
+    createReverbImpulse(convolver) {
+        // Create a simple reverb impulse response
+        const sampleRate = this.audioContext.sampleRate;
+        const length = sampleRate * 2; // 2 seconds
+        const impulse = this.audioContext.createBuffer(2, length, sampleRate);
+        
+        for (let channel = 0; channel < 2; channel++) {
+            const channelData = impulse.getChannelData(channel);
+            for (let i = 0; i < length; i++) {
+                // Exponential decay
+                channelData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 2);
+            }
+        }
+        
+        convolver.buffer = impulse;
+    }
+
+    applyEffectStates(track) {
+        const nodes = this.trackNodes.get(track.id);
+        if (!nodes) return;
+
+        // EQ
+        nodes.eqNode.gain.value = track.effects.eq ? track.eqSettings?.mid || 0 : 0;
+
+        // Compressor
+        nodes.compressorNode.threshold.value = track.effects.compressor ? -24 : 0;
+
+        // Reverb
+        nodes.reverbGain.gain.value = track.effects.reverb ? 0.3 : 0;
     }
 
     drawWaveform(track) {
@@ -459,7 +525,12 @@ class MiniDAW {
         if (track) {
             track.effects[effect] = !track.effects[effect];
             this.updateEffectsUI(track);
+            this.applyEffectStates(track);
             this.saveToLocalStorage();
+            
+            // Mostrar notificação
+            const status = track.effects[effect] ? 'ativado' : 'desativado';
+            this.showNotification(`${effect.toUpperCase()} ${status} na track`, 'info');
         }
     }
 
@@ -484,13 +555,69 @@ class MiniDAW {
 
     updateEQ(trackId, band, value) {
         const track = this.tracks.find(t => t.id === trackId);
-        if (track) {
-            if (!track.eqSettings) {
-                track.eqSettings = { low: 0, mid: 0, high: 0 };
+        if (!track) return;
+
+        if (!track.eqSettings) track.eqSettings = {};
+        track.eqSettings[band] = parseFloat(value);
+
+        const nodes = this.trackNodes.get(trackId);
+        if (nodes && track.effects.eq) {
+            switch(band) {
+                case 'low':
+                    nodes.eqNode.frequency.value = 250;
+                    nodes.eqNode.gain.value = track.eqSettings[band];
+                    break;
+                case 'mid':
+                    nodes.eqNode.frequency.value = 1000;
+                    nodes.eqNode.gain.value = track.eqSettings[band];
+                    break;
+                case 'high':
+                    nodes.eqNode.frequency.value = 4000;
+                    nodes.eqNode.gain.value = track.eqSettings[band];
+                    break;
             }
-            track.eqSettings[band] = parseFloat(value);
-            this.saveToLocalStorage();
         }
+        this.saveToLocalStorage();
+    }
+
+    updateReverbAmount(trackId, amount) {
+        const track = this.tracks.find(t => t.id === trackId);
+        if (!track) return;
+
+        track.reverbAmount = parseFloat(amount) / 100;
+
+        const nodes = this.trackNodes.get(trackId);
+        if (nodes && track.effects.reverb) {
+            nodes.reverbGain.gain.value = track.reverbAmount;
+        }
+        this.saveToLocalStorage();
+    }
+
+    updateCompressor(trackId, param, value) {
+        const track = this.tracks.find(t => t.id === trackId);
+        if (!track) return;
+
+        if (!track.compressorSettings) track.compressorSettings = {};
+        track.compressorSettings[param] = parseFloat(value);
+
+        const nodes = this.trackNodes.get(trackId);
+        if (nodes && track.effects.compressor) {
+            switch(param) {
+                case 'threshold':
+                    nodes.compressorNode.threshold.value = parseFloat(value);
+                    break;
+                case 'ratio':
+                    nodes.compressorNode.ratio.value = parseFloat(value);
+                    break;
+                case 'attack':
+                    nodes.compressorNode.attack.value = parseFloat(value) / 1000;
+                    break;
+                case 'release':
+                    nodes.compressorNode.release.value = parseFloat(value) / 1000;
+                    break;
+            }
+        }
+        this.saveToLocalStorage();
     }
 
     removeTrack(trackId) {
@@ -605,8 +732,8 @@ class MiniDAW {
             );
         }
 
-        // Connect and start
-        sourceNode.connect(nodes.gainNode);
+        // Connect to effect chain: source -> EQ -> Compressor -> ...
+        sourceNode.connect(nodes.inputNode);
         sourceNode.start(0, this.currentTime);
         
         nodes.sourceNode = sourceNode;
@@ -1647,3 +1774,7 @@ window.trackZoomIn = (id) => minidaw.trackZoomIn(id);
 window.trackZoomOut = (id) => minidaw.trackZoomOut(id);
 window.saveVipProject = () => minidaw.saveVipProject();
 window.loadVipProject = () => minidaw.loadVipProject();
+
+// Efeitos de áudio
+window.updateReverbAmount = (id, amount) => minidaw.updateReverbAmount(id, amount);
+window.updateCompressor = (id, param, value) => minidaw.updateCompressor(id, param, value);
