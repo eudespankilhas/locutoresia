@@ -336,6 +336,22 @@ function shareAudio() {
     }
 }
 
+// ── Enviar áudio para MiniDAW externa ─────────────────────────────────────
+function sendToMiniDAW() {
+    const audioPlayer = document.getElementById('generatedAudio');
+    if (!audioPlayer || !audioPlayer.src || audioPlayer.src === window.location.href) {
+        alert('Gere um áudio primeiro!');
+        return;
+    }
+    
+    // Salva URL do áudio no localStorage para a MiniDAW externa ler
+    localStorage.setItem('minidaw_pending_audio', audioPlayer.src);
+    localStorage.setItem('minidaw_pending_timestamp', Date.now().toString());
+    
+    // Abre MiniDAW em nova aba
+    window.open('/minidaw', '_blank');
+}
+
 function updateStats() {
     const el = document.getElementById('audiosCount');
     const n = parseInt(el.textContent.replace(/\D/g, ''));
