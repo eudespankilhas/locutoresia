@@ -428,134 +428,6 @@
                     <!-- Voice cards will be dynamically generated here -->
                 </div>
 
-                <!-- MiniDAW Integrada -->
-                <div class="mt-5" id="miniDAWPanel">
-                    <h5 class="mb-4"><i class="fas fa-music me-2"></i>MiniDAW - Mixagem Profissional</h5>
-                    
-                    <!-- Quick Actions -->
-                    <div class="quick-actions">
-                        <button class="quick-action-btn" onclick="addMiniDAWTrack('voice')">
-                            <i class="fas fa-microphone me-1"></i>
-                            Adicionar Voz
-                        </button>
-                        <button class="quick-action-btn" onclick="addMiniDAWTrack('music')">
-                            <i class="fas fa-music me-1"></i>
-                            Adicionar Trilha
-                        </button>
-                        <button class="quick-action-btn" onclick="toggleMiniDAWScissor()" id="miniDAWScissorBtn">
-                            <i class="fas fa-cut me-1"></i>
-                            Tesoura
-                        </button>
-                        <button class="quick-action-btn" onclick="normalizeMiniDAWVolumes()">
-                            <i class="fas fa-sliders-h me-1"></i>
-                            Normalizar
-                        </button>
-                        <button class="quick-action-btn" onclick="applyMiniDAWAutoFade()" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; border-color: #f59e0b;">
-                            <i class="fas fa-wave-square me-1"></i>
-                            Auto Fade 1.05s
-                        </button>
-                        <button class="quick-action-btn" onclick="clearMiniDAWTracks()">
-                            <i class="fas fa-trash me-1"></i>
-                            Limpar
-                        </button>
-                    </div>
-
-                    <!-- Timeline -->
-                    <div class="timeline-container">
-                        <div class="timeline-header">
-                            <div class="playback-controls-enhanced">
-                                <button class="control-btn" onclick="toggleMiniDAWPlayback()" title="Play/Pause (Espaço)">
-                                    <i class="fas fa-play" id="miniDAWPlayIcon"></i>
-                                </button>
-                                <button class="control-btn" onclick="stopMiniDAWPlayback()" title="Stop (S)">
-                                    <i class="fas fa-stop"></i>
-                                </button>
-                                <div class="control-group">
-                                    <span class="control-label">Tempo:</span>
-                                    <span id="miniDAWCurrentTime">0:00</span>
-                                </div>
-                                <div class="control-group">
-                                    <span class="control-label">Duração:</span>
-                                    <span id="miniDAWTotalDuration">0:00</span>
-                                </div>
-                            </div>
-                            <div class="zoom-controls">
-                                <button class="control-btn" onclick="zoomMiniDAWIn()" title="Zoom In (+)">
-                                    <i class="fas fa-search-plus"></i>
-                                </button>
-                                <span class="zoom-indicator" id="miniDAWZoomIndicator">100%</span>
-                                <button class="control-btn" onclick="zoomMiniDAWOut()" title="Zoom Out (-)">
-                                    <i class="fas fa-search-minus"></i>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <!-- Drop Zone -->
-                        <div class="drop-zone" id="miniDAWDropZone" 
-                             ondrop="handleMiniDAWDrop(event)" 
-                             ondragover="handleMiniDAWDragOver(event)" 
-                             ondragleave="handleMiniDAWDragLeave(event)">
-                            <i class="fas fa-cloud-upload-alt"></i>
-                            <p>Arraste áudios aqui (voz e trilhas)</p>
-                            <input type="file" id="miniDAWFileInput" multiple accept="audio/*" style="display: none;" onchange="handleMiniDAWFileSelect(event)">
-                            <button class="btn btn-primary btn-sm mt-2" onclick="document.getElementById('miniDAWFileInput').click()">
-                                <i class="fas fa-folder-open me-1"></i>Escolher Arquivos
-                            </button>
-                        </div>
-                        
-                        <!-- Tracks Container -->
-                        <div id="miniDAWTracksContainer">
-                            <!-- Tracks will be added here -->
-                        </div>
-                        
-                        <!-- Empty State -->
-                        <div class="empty-state" id="miniDAWEmptyState">
-                            <i class="fas fa-music"></i>
-                            <h6>Nenhuma faixa adicionada</h6>
-                            <p class="small">Adicione vozes e trilhas para começar a mixagem</p>
-                            <button class="btn btn-primary btn-sm mt-2" onclick="addMiniDAWTrack('voice')">
-                                <i class="fas fa-plus me-1"></i>Adicionar Primeira Faixa
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Export Panel -->
-                    <div class="export-panel">
-                        <h6 class="mb-3">
-                            <i class="fas fa-file-export me-2"></i>
-                            Exportar Mix Final
-                        </h6>
-                        <div class="export-options">
-                            <div class="format-selector">
-                                <button class="format-btn active" onclick="setMiniDAWFormat('wav')">WAV</button>
-                                <button class="format-btn" onclick="setMiniDAWFormat('mp3')">MP3</button>
-                            </div>
-                            <div class="control-group" id="miniDAWMP3BitrateGroup" style="display: none;">
-                                <span class="control-label">Bitrate:</span>
-                                <select class="form-select form-select-sm" id="miniDAWMP3Bitrate">
-                                    <option value="128">128 kbps</option>
-                                    <option value="192" selected>192 kbps</option>
-                                    <option value="320">320 kbps</option>
-                                </select>
-                            </div>
-                            <button class="btn btn-success" onclick="exportMiniDAWMix()">
-                                <i class="fas fa-download me-1"></i>Exportar
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Mixing Status -->
-                    <div class="mixing-status" id="miniDAWMixingStatus">
-                        <h6 class="mb-2">
-                            <i class="fas fa-cog fa-spin me-2"></i>
-                            Processando Mix...
-                        </h6>
-                        <div class="progress-bar-container">
-                            <div class="progress-bar-fill" id="miniDAWProgressFill"></div>
-                        </div>
-                        <p class="mb-0 text-muted small" id="miniDAWMixingStatusText">Preparando faixas...</p>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -1636,15 +1508,9 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="/static/voxcraft_integration.js?v=1"></script>
-    <script src="/static/script.js?v=6"></script>
-    <script src="/static/minidaw-integrated.js?v=8"></script>
+    <script src="/static/voxcraft_integration.js?v=2"></script>
+    <script src="/static/script.js?v=7"></script>
     <script>
-        // Inicializar MiniDAW quando a página carregar
-        let miniDAW;
-        document.addEventListener('DOMContentLoaded', function() {
-            miniDAW = new MiniDAWIntegrated();
-        });
 
         // Fallback: Garantir que o dropdown de vozes seja preenchido
         (function populateVoiceSelectFallback() {
