@@ -226,7 +226,104 @@ async function generateAudio() {
         updateStats();
 
     } catch (error) {
-        alert('Erro ao gerar áudio: ' + error.message);
+        let errorMsg = error.message;
+        
+        // Tratamento especial para erro 429 (quota excedida)
+        if (errorMsg.includes('429') || errorMsg.includes('RESOURCE_EXHAUSTED') || errorMsg.includes('quota')) {
+            errorMsg = '⚠️ Limite de requisições atingido na API do Google.\n\n' +
+                      'Isso acontece no plano gratuito após muitos usos.\n\n' +
+                      '💡 Soluções:\n' +
+                      '1. Aguarde 1 minuto e tente novamente\n' +
+                      '2. Use uma voz ElevenLabs (se disponível)\n' +
+                      '3. Tente novamente amanhã\n\n' +
+                      'Tentando novamente automaticamente em 30s...';
+            
+            // Oferece alternativa: Web Speech API
+            const useFallback = confirm('Deseja usar a voz do navegador (Web Speech API) como alternativa gratuita?');
+            if (useFallback) {
+                generateAudioWithWebSpeech();
+                return;
+            }
+            
+            // Tenta novamente após 30 segundos
+            setTimeout(() => {
+                if (confirm('Deseja tentar gerar o áudio novamente?')) {
+                    generateAudio();
+                }
+            }, 30000);
+        }
+        
+        alert('Erro ao gerar áudio: ' + errorMsg);
+        document.getElementById('loadingSpinner').style.display = 'none';
+    }
+}
+
+// Fallback usando Web Speech API (gratuito, nativo do navegador)
+async function generateAudioWithWebSpeech() {
+    const text = document.getElementById('textInput').value.trim();
+    if (!text) {
+        alert('Por favor, digite o texto primeiro.');
+        return;
+    }
+    
+    // Verifica suporte
+    if (!('speechSynthesis' in window)) {
+        alert('Seu navegador não suporta Web Speech API');
+        return;
+    }
+    
+    document.getElementById('loadingSpinner').style.display = 'block';
+    
+    try {
+        // Configura utterance
+        const utterance = new SpeechSynthesisUtterance(text);
+        
+        // Seleciona voz em português se disponível
+        const voices = window.speechSynthesis.getVoices();
+        const ptVoice = voices.find(v => v.lang.includes('pt'));
+        if (ptVoice) utterance.voice = ptVoice;
+        
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+        
+        // Para converter em áudio gravável, usamos AudioContext
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // Como não podemos gravar diretamente, vamos apenas reproduzir
+        // e mostrar uma mensagem alternativa
+        window.speechSynthesis.speak(utterance);
+        
+        // Cria um placeholder visual
+        const audioPlayer = document.getElementById('generatedAudio');
+        audioPlayer.style.display = 'none'; // Esconde player normal
+        
+        // Mostra mensagem de áudio sendo reproduzido
+        const notice = document.createElement('div');
+        notice.id = 'webspeech-notice';
+        notice.innerHTML = `
+            <div style="background:#f0fdf4;border:2px solid #22c55e;padding:15px;border-radius:10px;margin-top:10px;">
+                <strong>🔊 Usando Web Speech API (Gratuito)</strong><br>
+                <small>O áudio está sendo reproduzido pelo navegador.</small><br>
+                <small>Para salvar, use ferramentas de gravação de tela ou espere a API do Google voltar.</small>
+            </div>
+        `;
+        
+        const existing = document.getElementById('webspeech-notice');
+        if (existing) existing.remove();
+        
+        document.getElementById('audioPlayer').appendChild(notice);
+        document.getElementById('audioPlayer').style.display = 'block';
+        document.getElementById('loadingSpinner').style.display = 'none';
+        
+        // Quando terminar
+        utterance.onend = () => {
+            console.log('Web Speech concluído');
+        };
+        
+    } catch (error) {
+        console.error('Erro Web Speech:', error);
+        alert('Erro ao usar Web Speech API: ' + error.message);
         document.getElementById('loadingSpinner').style.display = 'none';
     }
 }
