@@ -182,6 +182,228 @@ def not_found(error):
 def internal_error(error):
     return jsonify({'error': 'Erro interno do servidor'}), 500
 
+
+# ============================================================
+# ENDPOINTS VOXCRAFT INTEGRATION
+# ============================================================
+
+from flask import make_response
+
+# Sessões temporárias em memória (em produção usar Redis/DB)
+voxcraft_sessions = {}
+
+@app.route('/api/voxcraft/health', methods=['GET'])
+def voxcraft_health():
+    """Health check para integração VoxCraft"""
+    return jsonify({
+        'status': 'ok',
+        'integration': 'voxcraft',
+        'version': '1.0.0',
+        'timestamp': datetime.now().isoformat()
+    })
+
+@app.route('/api/voxcraft/receive', methods=['POST', 'OPTIONS'])
+def voxcraft_receive():
+    """Recebe notícia do VoxCraft e retorna URL para redirecionamento"""
+    # Handle CORS preflight
+    if request.method == 'OPTIONS':
+        response = make_response()
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
+        return response
+    
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': 'Dados não fornecidos'}), 400
+        
+        # Campos obrigatórios
+        text = data.get('text', '').strip()
+        post_id = data.get('post_id', '').strip()
+        
+        if not text:
+            return jsonify({'error': 'Texto não fornecido'}), 400
+        if not post_id:
+            return jsonify({'error': 'post_id não fornecido'}), 400
+        
+        # Campos opcionais
+        title = data.get('title', 'Notícia VoxCraft').strip()
+        category = data.get('category', 'geral').strip()
+        image_url = data.get('image_url', '').strip()
+        return_url = data.get('return_url', '').strip()
+        
+        # Sanitiza post_id (apenas alphanumeric e hífen)
+        import re
+        post_id = re.sub(r'[^a-zA-Z0-9\-_]', '', post_id)[:50]
+        
+        # Cria sessão temporária
+        session_id = f"voxcraft_{post_id}_{uuid.uuid4().hex[:8]}"
+        voxcraft_sessions[session_id] = {
+            'post_id': post_id,
+            'text': text,
+            'title': title,
+            'category': category,
+            'image_url': image_url,
+            'return_url': return_url,
+            'created_at': datetime.now().isoformat(),
+            'status': 'pending',
+            'audio_filename': None
+        }
+        
+        # Limpa sessões antigas (mais de 1 hora)
+        current_time = datetime.now()
+        expired = []
+        for sid, session in voxcraft_sessions.items():
+            created = datetime.fromisoformat(session['created_at'])
+            if (current_time - created).total_seconds() > 3600:
+                expired.append(sid)
+        for sid in expired:
+            del voxcraft_sessions[sid]
+        
+        # Constrói URL de redirecionamento
+        from urllib.parse import quote
+        base_url = request.host_url.rstrip('/')
+        redirect_url = (
+            f"{base_url}/?"
+            f"voxcraft=true&"
+            f"session_id={session_id}&"
+            f"text={quote(text[:500])}&"  # Limita texto na URL
+            f"post_id={post_id}&"
+            f"title={quote(title[:100])}"
+        )
+        
+        if category:
+            redirect_url += f"&category={quote(category[:50])}"
+        if image_url:
+            redirect_url += f"&image_url={quote(image_url[:500])}"
+        if return_url:
+            redirect_url += f"&return_url={quote(return_url[:500])}"
+        
+        response = jsonify({
+            'success': True,
+            'session_id': session_id,
+            'redirect_url': redirect_url,
+            'message': 'Sessão criada. Redirecione usuário para a URL fornecida.'
+        })
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response
+        
+    except Exception as e:
+        print(f"Erro em voxcraft_receive: {str(e)}")
+        response = jsonify({'error': f'Erro interno: {str(e)}'}), 500
+        if isinstance(response, tuple):
+            response[0].headers.add('Access-Control-Allow-Origin', '*')
+        else:
+            response.headers.add('Access-Control-Allow-Origin', '*')
+        return response
+
+@app.route('/api/voxcraft/metadata/<session_id>', methods=['GET'])
+def voxcraft_metadata(session_id):
+    """Retorna metadados da sessão VoxCraft"""
+    try:
+        if session_id not in voxcraft_sessions:
+            return jsonify({'error': 'Sessão não encontrada'}), 404
+        
+        session = voxcraft_sessions[session_id]
+        return jsonify({
+            'success': True,
+            'session_id': session_id,
+            'post_id': session['post_id'],
+            'title': session['title'],
+            'category': session['category'],
+            'image_url': session['image_url'],
+            'return_url': session['return_url'],
+            'status': session['status'],
+            'audio_filename': session['audio_filename'],
+            'created_at': session['created_at']
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/voxcraft/complete', methods=['POST', 'OPTIONS'])
+def voxcraft_complete():
+    """Notifica conclusão da geração de áudio"""
+    if request.method == 'OPTIONS':
+        response = make_response()
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
+        return response
+    
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': 'Dados não fornecidos'}), 400
+        
+        session_id = data.get('session_id', '').strip()
+        audio_filename = data.get('audio_filename', '').strip()
+        
+        if not session_id:
+            return jsonify({'error': 'session_id não fornecido'}), 400
+        if session_id not in voxcraft_sessions:
+            return jsonify({'error': 'Sessão não encontrada'}), 404
+        
+        # Atualiza sessão
+        session = voxcraft_sessions[session_id]
+        session['status'] = 'completed'
+        session['audio_filename'] = audio_filename
+        session['completed_at'] = datetime.now().isoformat()
+        
+        # Constrói URL de retorno
+        return_url = session.get('return_url', '')
+        if return_url:
+            separator = '&' if '?' in return_url else '?'
+            return_url += f"{separator}audio_filename={audio_filename}&session_id={session_id}"
+        
+        response = jsonify({
+            'success': True,
+            'message': 'Áudio gerado com sucesso',
+            'return_url': return_url,
+            'audio_filename': audio_filename,
+            'session_id': session_id
+        })
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response
+        
+    except Exception as e:
+        print(f"Erro em voxcraft_complete: {str(e)}")
+        response = jsonify({'error': str(e)}), 500
+        if isinstance(response, tuple):
+            response[0].headers.add('Access-Control-Allow-Origin', '*')
+        else:
+            response.headers.add('Access-Control-Allow-Origin', '*')
+        return response
+
+@app.route('/api/voxcraft/logs', methods=['GET'])
+def voxcraft_logs():
+    """Retorna logs das sessões (para debug)"""
+    try:
+        logs = []
+        for sid, session in voxcraft_sessions.items():
+            logs.append({
+                'session_id': sid,
+                'post_id': session['post_id'],
+                'title': session['title'][:50],
+                'status': session['status'],
+                'created_at': session['created_at'],
+                'has_audio': bool(session['audio_filename'])
+            })
+        
+        # Ordena por data (mais recente primeiro)
+        logs.sort(key=lambda x: x['created_at'], reverse=True)
+        
+        return jsonify({
+            'success': True,
+            'total_sessions': len(logs),
+            'sessions': logs[:20]  # Últimas 20
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 # Handler para Vercel serverless
 from flask import Flask
 
