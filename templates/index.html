@@ -1684,6 +1684,31 @@
         document.addEventListener('DOMContentLoaded', function() {
             miniDAW = new MiniDAWIntegrated();
         });
+
+        // 🆘 HELPERS DE DIAGNÓSTICO (use se der erro)
+        window.resetLocutores = () => {
+            localStorage.clear();
+            sessionStorage.clear();
+            console.log('✅ Locutores IA resetado! Recarregando...');
+            window.location.reload();
+        };
+        
+        window.debugLocutores = () => {
+            console.log('📊 DIAGNÓSTICO LOCUTORES IA:');
+            console.log('- Total vozes carregadas:', elevenLabsVoices.length + voicesDatabase.length);
+            console.log('- ElevenLabs:', elevenLabsVoices.length);
+            console.log('- Edge TTS:', voicesDatabase.length);
+            console.log('- Voz selecionada:', document.getElementById('voiceSelect').value);
+            console.log('- Texto digitado:', document.getElementById('textInput').value.substring(0, 50) + '...');
+            console.log('- AudioContext:', window.AudioContext || window.webkitAudioContext ? '✅ Suportado' : '❌ Não suportado');
+        };
+
+        // Instruções no console
+        console.log('%c🎙️ Locutores IA - Ajuda', 'font-size: 16px; font-weight: bold; color: #3498db;');
+        console.log('%cSe der erro ao gerar áudio:', 'font-weight: bold;');
+        console.log('1. Cole no console: resetLocutores()');
+        console.log('2. Ou use: debugLocutores() para ver estado');
+        console.log('3. No MiniDAW: resetMiniDAW() para limpar cache');
     </script>
 </body>
 </html>

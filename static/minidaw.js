@@ -1391,7 +1391,10 @@ class MiniDAW {
                 this.updateUI();
             }
         } catch (error) {
-            console.error('Error loading from localStorage:', error);
+            console.error('❌ Erro ao carregar localStorage:', error.message);
+            console.warn('🧹 Limpando dados corrompidos...');
+            localStorage.removeItem('minidaw_project');
+            this.showNotification('Dados salvos corrompidos foram removidos. O MiniDAW foi resetado.', 'warning');
         }
     }
 
@@ -1797,3 +1800,31 @@ window.loadVipProject = () => minidaw.loadVipProject();
 // Efeitos de áudio
 window.updateReverbAmount = (id, amount) => minidaw.updateReverbAmount(id, amount);
 window.updateCompressor = (id, param, value) => minidaw.updateCompressor(id, param, value);
+
+// 🧹 Helper para limpar cache e resetar MiniDAW (use se der erro)
+window.resetMiniDAW = () => {
+    localStorage.removeItem('minidaw_project');
+    sessionStorage.clear();
+    console.log('✅ MiniDAW resetado! Recarregando...');
+    window.location.reload();
+};
+
+// 📊 Debug: Mostrar estado atual no console
+window.debugMiniDAW = () => {
+    console.log('📊 ESTADO DO MINIDAW:');
+    console.log('- Tracks:', minidaw.tracks.length);
+    console.log('- Tracks detalhes:', minidaw.tracks.map(t => ({id: t.id, type: t.type, name: t.name, hasAudio: !!t.audioBuffer})));
+    console.log('- Nodes criados:', Array.from(minidaw.trackNodes.keys()));
+    console.log('- Is Playing:', minidaw.isPlaying);
+    console.log('- Current Time:', minidaw.currentTime);
+};
+
+// 🎤 Testar AudioContext
+window.testAudioContext = async () => {
+    if (minidaw.audioContext.state === 'suspended') {
+        await minidaw.audioContext.resume();
+        console.log('✅ AudioContext resumido:', minidaw.audioContext.state);
+    } else {
+        console.log('ℹ️ AudioContext já está:', minidaw.audioContext.state);
+    }
+};
