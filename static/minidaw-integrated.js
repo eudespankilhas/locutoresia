@@ -2054,26 +2054,49 @@ window.updateMiniDAWReverb = (id, param, value) => miniDAW.updateReverb(id, para
 window.toggleMiniDAWAllEffects = (id) => miniDAW.toggleAllEffects(id);
 window.saveMiniDAWPreset = (id) => miniDAW.savePreset(id);
 window.resetMiniDAWEffects = (id) => miniDAW.resetEffects(id);
-window.sendToMiniDAW = () => {
-    // Função para enviar áudio gerado para MiniDAW
+window.sendToMiniDAW = async () => {
+    // Função para enviar áudio gerado para a página MiniDAW externa (/minidaw)
     const audioElement = document.getElementById('generatedAudio');
     
     // Verifica se temos o blob salvo ou o elemento de áudio
+    let blobToSend = null;
+    
     if (typeof lastGeneratedAudioBlob !== 'undefined' && lastGeneratedAudioBlob) {
-        // Usa o blob salvo (mais confiável)
-        miniDAW.sendAudioBlobToMiniDAW(lastGeneratedAudioBlob, 'audio_gerado.wav');
+        blobToSend = lastGeneratedAudioBlob;
     } else if (audioElement && audioElement.src) {
-        // Fallback: usa a URL do elemento
-        miniDAW.sendAudioToMiniDAW(audioElement.src, 'audio_gerado.wav');
+        // Tenta fazer fetch do áudio
+        try {
+            const response = await fetch(audioElement.src);
+            blobToSend = await response.blob();
+        } catch (error) {
+            console.error('Erro ao buscar áudio:', error);
+            alert('Erro ao enviar áudio. Tente gerar o áudio novamente.');
+            return;
+        }
     } else {
-        miniDAW.showNotification('Nenhum áudio gerado para enviar', 'warning');
+        alert('Nenhum áudio gerado para enviar');
         return;
     }
     
-    miniDAW.showNotification('Áudio enviado para MiniDAW com sucesso!', 'success');
-    
-    // Scroll para MiniDAW
-    document.getElementById('miniDAWPanel').scrollIntoView({ behavior: 'smooth' });
+    // Converte blob para base64 e salva no localStorage
+    try {
+        const reader = new FileReader();
+        reader.onloadend = function() {
+            const base64data = reader.result;
+            
+            // Salva no localStorage para a outra página ler
+            localStorage.setItem('minidaw_pending_audio', base64data);
+            localStorage.setItem('minidaw_pending_filename', 'audio_gerado.wav');
+            localStorage.setItem('minidaw_pending_timestamp', Date.now().toString());
+            
+            // Abre a página MiniDAW em nova aba
+            window.open('/minidaw', '_blank');
+        };
+        reader.readAsDataURL(blobToSend);
+    } catch (error) {
+        console.error('Erro ao converter áudio:', error);
+        alert('Erro ao preparar áudio para envio');
+    }
 };
 
 // Novos controles de efeitos
