@@ -226,33 +226,7 @@ async function generateAudio() {
         updateStats();
 
     } catch (error) {
-        let errorMsg = error.message;
-        
-        // Tratamento especial para erro 429 (quota excedida)
-        if (errorMsg.includes('429') || errorMsg.includes('RESOURCE_EXHAUSTED') || errorMsg.includes('quota')) {
-            errorMsg = '⚠️ Google TTS: Limite diário atingido (erro 429).\n\n' +
-                      '💡 RECOMENDADO: Selecione uma voz ElevenLabs no dropdown!\n\n' +
-                      'Alternativas:\n' +
-                      '1. 🌟 Use voz ElevenLabs (alta qualidade, sem limites)\n' +
-                      '2. ⏰ Aguarde 24h para reset da quota Google\n' +
-                      '3. 🔊 Use Web Speech API (gratuito, voz do navegador)';
-            
-            // Oferece alternativa: Web Speech API
-            const useFallback = confirm('Deseja usar a voz do navegador (Web Speech API) como alternativa gratuita?');
-            if (useFallback) {
-                generateAudioWithWebSpeech();
-                return;
-            }
-            
-            // Tenta novamente após 30 segundos
-            setTimeout(() => {
-                if (confirm('Deseja tentar gerar o áudio novamente?')) {
-                    generateAudio();
-                }
-            }, 30000);
-        }
-        
-        alert('Erro ao gerar áudio: ' + errorMsg);
+        console.error('Erro ao gerar áudio:', error);
         document.getElementById('loadingSpinner').style.display = 'none';
     }
 }
