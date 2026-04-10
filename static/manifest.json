@@ -1,0 +1,33 @@
+{
+  "name": "Locutores IA",
+  "short_name": "Locutores IA",
+  "description": "Gere áudios profissionais com IA. Vozes realistas para notícias, podcasts e conteúdo.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#2c3e50",
+  "theme_color": "#2c3e50",
+  "orientation": "portrait",
+  "scope": "/",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "https://picsum.photos/seed/locutores72/72/72",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://picsum.photos/seed/locutores192/192/192",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://picsum.photos/seed/locutores512/512/512",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["entertainment", "productivity", "utilities"]
+}

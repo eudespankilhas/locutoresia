@@ -2,7 +2,15 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="theme-color" content="#2c3e50">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Locutores IA">
+    <meta name="description" content="Gere áudios profissionais com IA. Vozes realistas para notícias, podcasts e conteúdo.">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="apple-touch-icon" href="/static/icon-192.png">
     <title>Locutores IA - Central de Vozes Inteligentes</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -1504,12 +1512,152 @@
             transform: translateY(-2px);
             box-shadow: 0 10px 25px rgba(245, 158, 11, 0.3);
         }
+
+        /* ============================================
+           CSS RESPONSIVO - MOBILE
+           ============================================ */
+        @media (max-width: 768px) {
+            /* Hero Section */
+            .hero-section {
+                padding: 30px 15px !important;
+            }
+            .hero-section h1 {
+                font-size: 1.8rem !important;
+            }
+            .hero-section p {
+                font-size: 1rem !important;
+            }
+
+            /* Cards de voz */
+            .voice-card {
+                margin-bottom: 15px;
+            }
+            .voice-card .card-body {
+                padding: 15px;
+            }
+            .voice-card h6 {
+                font-size: 0.95rem;
+            }
+
+            /* Painel de geração */
+            .generation-panel {
+                padding: 20px 15px !important;
+            }
+            .generation-panel h5 {
+                font-size: 1.1rem;
+            }
+
+            /* Textarea */
+            #textInput {
+                min-height: 120px;
+                font-size: 16px; /* Evita zoom no iOS */
+            }
+
+            /* Botões */
+            .btn {
+                padding: 12px 20px;
+                font-size: 1rem;
+                min-height: 44px; /* Touch-friendly */
+            }
+
+            /* Navbar */
+            .navbar-brand {
+                font-size: 1.2rem;
+            }
+            .navbar-toggler {
+                padding: 8px 12px;
+            }
+
+            /* Audio Player */
+            #generatedAudio {
+                width: 100%;
+            }
+
+            /* Container */
+            .container {
+                padding-left: 15px;
+                padding-right: 15px;
+            }
+
+            /* Stats */
+            .stats-container {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .stat-item {
+                min-width: auto;
+                width: 100%;
+            }
+
+            /* Voice cards grid */
+            #voicesContainer .col-md-6 {
+                width: 100%;
+                padding: 5px;
+            }
+
+            /* Dropdown */
+            #voiceSelect {
+                font-size: 16px;
+                padding: 12px;
+            }
+
+            /* VoxCraft banner */
+            #voxcraft-banner > div {
+                flex-direction: column;
+                text-align: center;
+                padding: 15px !important;
+            }
+        }
+
+        /* Tablets */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .voice-card {
+                margin-bottom: 20px;
+            }
+            .hero-section h1 {
+                font-size: 2rem;
+            }
+        }
+
+        /* Landscape em mobile */
+        @media (max-width: 768px) and (orientation: landscape) {
+            .hero-section {
+                padding: 20px 15px !important;
+            }
+            .hero-section h1 {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* iPhone notch */
+        @supports (padding-top: env(safe-area-inset-top)) {
+            body {
+                padding-top: env(safe-area-inset-top);
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+        }
     </style>
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/static/voxcraft_integration.js?v=2"></script>
     <script src="/static/script.js?v=7"></script>
+    
+    <!-- PWA Service Worker -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/static/service-worker.js')
+                    .then(function(registration) {
+                        console.log('✅ Service Worker registrado:', registration.scope);
+                    })
+                    .catch(function(error) {
+                        console.log('❌ Falha ao registrar Service Worker:', error);
+                    });
+            });
+        }
+    </script>
+    
     <script>
 
         // Fallback: Garantir que o dropdown de vozes seja preenchido
