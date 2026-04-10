@@ -330,6 +330,10 @@ class MiniDAW {
         const reverbGain = this.audioContext.createGain();
         reverbGain.gain.value = 0.3;
 
+        // Create analyser for silence detection
+        const analyser = this.audioContext.createAnalyser();
+        analyser.fftSize = 2048;
+
         // Create gain node
         const gainNode = this.audioContext.createGain();
         gainNode.gain.value = track.volume / 100;
@@ -338,10 +342,11 @@ class MiniDAW {
         const panNode = this.audioContext.createStereoPanner();
         panNode.pan.value = track.pan;
         
-        // Connect nodes: input -> EQ -> Compressor -> Gain -> Pan -> Master
+        // Connect nodes: input -> EQ -> Compressor -> Analyser -> Gain -> Pan -> Master
         // Reverb is parallel: Compressor -> Reverb -> ReverbGain -> Pan
         eqNode.connect(compressorNode);
-        compressorNode.connect(gainNode);
+        compressorNode.connect(analyser);
+        analyser.connect(gainNode);
         compressorNode.connect(reverbNode);
         reverbNode.connect(reverbGain);
         reverbGain.connect(panNode);
@@ -353,6 +358,7 @@ class MiniDAW {
             inputNode: eqNode,
             eqNode,
             compressorNode,
+            analyser,
             reverbNode,
             reverbGain,
             gainNode,
@@ -1292,8 +1298,18 @@ class MiniDAW {
         try {
             this.showNotification('Buscando áudios recentes...', 'info');
             
-            // Get recent audio files from TTS
-            const response = await fetch('/api/recent-audio');
+            // Get recent audio files from TTS with timeout
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000);
+            
+            const serverUrl = `${window.location.origin}/api/recent-audio`;
+            const response = await fetch(serverUrl, {
+                signal: controller.signal,
+                headers: { 'Accept': 'application/json' }
+            });
+            
+            clearTimeout(timeoutId);
+            
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
@@ -1331,7 +1347,11 @@ class MiniDAW {
             this.showNotification(`${loadedCount} de ${selectedFiles.length} áudios importados do TTS`, loadedCount > 0 ? 'success' : 'warning');
         } catch (error) {
             console.error('Error importing from TTS:', error);
-            this.showNotification('Erro ao importar do TTS. Verifique se o servidor está rodando.', 'error');
+            if (error.name === 'AbortError') {
+                this.showNotification('Timeout: TTS não respondeu em 8 segundos. Verifique a conexão.', 'error');
+            } else {
+                this.showNotification(`Erro TTS: ${error.message}`, 'error');
+            }
         }
     }
 
@@ -1501,9 +1521,8 @@ class MiniDAW {
                 const rms = Math.sqrt(sum / dataArray.length);
                 const isSilent = rms < 0.01;
 
-                // Se detectou silêncio e está próximo ao final
-                const audio = audioRefs.current[voiceTrack.id];
-                if (audio && isSilent && (audio.duration - audio.currentTime) <= 2) {
+                // Se detectou silêncio no final da track
+                if (isSilent && voiceTrack.duration && (this.currentTime >= voiceTrack.duration - 2)) {
                     if (!this.voiceEndDetected.has(voiceTrack.id)) {
                         this.voiceEndDetected.set(voiceTrack.id, true);
                         
