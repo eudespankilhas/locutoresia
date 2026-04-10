@@ -113,22 +113,10 @@ function populateVoiceSelect() {
 
     select.innerHTML = '<option value="">Selecione uma voz</option>';
 
-    // Grupo Edge TTS
-    const edgeGroup = document.createElement('optgroup');
-    edgeGroup.label = '🟢 Edge TTS (Gratuito)';
-    voicesDatabase.forEach(v => {
-        const opt = document.createElement('option');
-        opt.value = v.id;
-        opt.textContent = v.name;
-        edgeGroup.appendChild(opt);
-    });
-    select.appendChild(edgeGroup);
-    console.log('Grupo Edge TTS adicionado com', voicesDatabase.length, 'vozes');
-
-    // Grupo ElevenLabs
+    // Grupo ElevenLabs (PRIMEIRO - prioridade quando Google TTS falha)
     if (elevenLabsVoices.length > 0) {
         const elGroup = document.createElement('optgroup');
-        elGroup.label = '⭐ ElevenLabs (Alta Qualidade)';
+        elGroup.label = '⭐ ElevenLabs (Recomendado - Alta Qualidade)';
         elevenLabsVoices.forEach(v => {
             const opt = document.createElement('option');
             opt.value = v.id;
@@ -138,6 +126,18 @@ function populateVoiceSelect() {
         select.appendChild(elGroup);
         console.log('Grupo ElevenLabs adicionado com', elevenLabsVoices.length, 'vozes');
     }
+
+    // Grupo Edge TTS / Google TTS
+    const edgeGroup = document.createElement('optgroup');
+    edgeGroup.label = '🎙️ Vozes Google TTS (Gratuito - Pode ter limites)';
+    voicesDatabase.forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v.id;
+        opt.textContent = v.name;
+        edgeGroup.appendChild(opt);
+    });
+    select.appendChild(edgeGroup);
+    console.log('Grupo Google TTS adicionado com', voicesDatabase.length, 'vozes');
 
     console.log('VoiceSelect populado com sucesso!');
 }
@@ -230,13 +230,12 @@ async function generateAudio() {
         
         // Tratamento especial para erro 429 (quota excedida)
         if (errorMsg.includes('429') || errorMsg.includes('RESOURCE_EXHAUSTED') || errorMsg.includes('quota')) {
-            errorMsg = '⚠️ Limite de requisições atingido na API do Google.\n\n' +
-                      'Isso acontece no plano gratuito após muitos usos.\n\n' +
-                      '💡 Soluções:\n' +
-                      '1. Aguarde 1 minuto e tente novamente\n' +
-                      '2. Use uma voz ElevenLabs (se disponível)\n' +
-                      '3. Tente novamente amanhã\n\n' +
-                      'Tentando novamente automaticamente em 30s...';
+            errorMsg = '⚠️ Google TTS: Limite diário atingido (erro 429).\n\n' +
+                      '💡 RECOMENDADO: Selecione uma voz ElevenLabs no dropdown!\n\n' +
+                      'Alternativas:\n' +
+                      '1. 🌟 Use voz ElevenLabs (alta qualidade, sem limites)\n' +
+                      '2. ⏰ Aguarde 24h para reset da quota Google\n' +
+                      '3. 🔊 Use Web Speech API (gratuito, voz do navegador)';
             
             // Oferece alternativa: Web Speech API
             const useFallback = confirm('Deseja usar a voz do navegador (Web Speech API) como alternativa gratuita?');
