@@ -15,6 +15,7 @@ const voicesDatabase = [
 let elevenLabsVoices = [];
 let currentVoices = [...voicesDatabase];
 let selectedVoice = null;
+let lastGeneratedAudioBlob = null; // Armazena o último áudio gerado para enviar à MiniDAW
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Locutores IA - Inicializando...');
@@ -207,7 +208,18 @@ async function generateAudio() {
         }
 
         const audioPlayer = document.getElementById('generatedAudio');
-        audioPlayer.src = audioUrl;
+        
+        // Fetch do áudio e salvar como blob para enviar à MiniDAW
+        try {
+            const audioResponse = await fetch(audioUrl);
+            lastGeneratedAudioBlob = await audioResponse.blob();
+            // Cria URL do blob para o player
+            audioPlayer.src = URL.createObjectURL(lastGeneratedAudioBlob);
+        } catch (blobError) {
+            console.error('Erro ao criar blob do áudio:', blobError);
+            audioPlayer.src = audioUrl; // Fallback para URL direta
+        }
+        
         audioPlayer.load();
         document.getElementById('loadingSpinner').style.display = 'none';
         document.getElementById('audioPlayer').style.display = 'block';

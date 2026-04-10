@@ -792,22 +792,77 @@ class MiniDAWIntegrated {
     }
 
     // Funções de integração
-    sendAudioToMiniDAW(audioUrl, filename) {
+    async sendAudioToMiniDAW(audioUrl, filename) {
         // Adiciona áudio gerado automaticamente à MiniDAW
         this.addTrack('voice');
         const trackId = this.tracks[this.tracks.length - 1].id;
         
-        // Fetch do áudio e carregamento
-        fetch(audioUrl)
-            .then(response => response.blob())
-            .then(blob => {
-                const file = new File([blob], filename, { type: 'audio/wav' });
-                this.loadAudioFile(file, trackId);
-            })
-            .catch(error => {
-                console.error('Error sending audio to MiniDAW:', error);
-                this.showNotification('Erro ao enviar áudio para MiniDAW', 'error');
-            });
+        try {
+            // Primeiro tenta fazer fetch do áudio
+            let blob;
+            try {
+                const response = await fetch(audioUrl);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                blob = await response.blob();
+            } catch (fetchError) {
+                console.log('Fetch falhou, tentando via audio element...', fetchError);
+                
+                // Fallback: tenta obter do elemento audio
+                const audioElement = document.getElementById('generatedAudio');
+                if (audioElement && audioElement.src) {
+                    // Se for um blob URL, extrai o blob
+                    if (audioElement.src.startsWith('blob:')) {
+                        const response = await fetch(audioElement.src);
+                        blob = await response.blob();
+                    } else {
+                        throw new Error('Áudio não disponível como blob');
+                    }
+                } else {
+                    throw new Error('Elemento de áudio não encontrado');
+                }
+            }
+            
+            // Cria arquivo e carrega
+            const file = new File([blob], filename, { type: 'audio/wav' });
+            await this.loadAudioFile(file, trackId);
+            
+            // Atualiza o nome da track
+            const track = this.tracks.find(t => t.id === trackId);
+            if (track) {
+                track.name = filename.replace('.wav', '');
+                this.updateTrackUI(track);
+            }
+            
+        } catch (error) {
+            console.error('Error sending audio to MiniDAW:', error);
+            this.showNotification('Erro ao enviar áudio para MiniDAW: ' + error.message, 'error');
+        }
+    }
+
+    // Nova função para receber blob diretamente (mais confiável)
+    async sendAudioBlobToMiniDAW(blob, filename) {
+        // Adiciona áudio gerado automaticamente à MiniDAW
+        this.addTrack('voice');
+        const trackId = this.tracks[this.tracks.length - 1].id;
+        
+        try {
+            // Cria arquivo diretamente do blob
+            const file = new File([blob], filename, { type: 'audio/wav' });
+            await this.loadAudioFile(file, trackId);
+            
+            // Atualiza o nome da track
+            const track = this.tracks.find(t => t.id === trackId);
+            if (track) {
+                track.name = filename.replace('.wav', '');
+                this.updateTrackUI(track);
+            }
+            
+            console.log(`Áudio blob enviado com sucesso para track ${trackId}`);
+            
+        } catch (error) {
+            console.error('Error sending audio blob to MiniDAW:', error);
+            this.showNotification('Erro ao enviar áudio para MiniDAW: ' + error.message, 'error');
+        }
     }
 
     // File handling
@@ -2002,15 +2057,23 @@ window.resetMiniDAWEffects = (id) => miniDAW.resetEffects(id);
 window.sendToMiniDAW = () => {
     // Função para enviar áudio gerado para MiniDAW
     const audioElement = document.getElementById('generatedAudio');
-    if (audioElement && audioElement.src) {
+    
+    // Verifica se temos o blob salvo ou o elemento de áudio
+    if (typeof lastGeneratedAudioBlob !== 'undefined' && lastGeneratedAudioBlob) {
+        // Usa o blob salvo (mais confiável)
+        miniDAW.sendAudioBlobToMiniDAW(lastGeneratedAudioBlob, 'audio_gerado.wav');
+    } else if (audioElement && audioElement.src) {
+        // Fallback: usa a URL do elemento
         miniDAW.sendAudioToMiniDAW(audioElement.src, 'audio_gerado.wav');
-        miniDAW.showNotification('Áudio enviado para MiniDAW com sucesso!', 'success');
-        
-        // Scroll para MiniDAW
-        document.getElementById('miniDAWPanel').scrollIntoView({ behavior: 'smooth' });
     } else {
         miniDAW.showNotification('Nenhum áudio gerado para enviar', 'warning');
+        return;
     }
+    
+    miniDAW.showNotification('Áudio enviado para MiniDAW com sucesso!', 'success');
+    
+    // Scroll para MiniDAW
+    document.getElementById('miniDAWPanel').scrollIntoView({ behavior: 'smooth' });
 };
 
 // Novos controles de efeitos
