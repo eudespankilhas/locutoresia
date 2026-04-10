@@ -47,17 +47,12 @@ class GoogleTTSGenerator:
         instruction = STYLE_INSTRUCTIONS.get(style, "Fale em tom normal e claro")
         full_text = f"{instruction}\n\n{text}"
         
-        # Configurar voz
-        voice_configs = [
-            types.SpeakerVoiceConfig(
-                speaker="Speaker 1",
-                voice_config=types.VoiceConfig(
-                    prebuilt_voice_config=types.PrebuiltVoiceConfig(
-                        voice_name=voice_name
-                    )
-                ),
+        # Configurar voz simples (não multi-speaker)
+        voice_config = types.VoiceConfig(
+            prebuilt_voice_config=types.PrebuiltVoiceConfig(
+                voice_name=voice_name
             )
-        ]
+        )
         
         contents = [
             types.Content(
@@ -70,9 +65,7 @@ class GoogleTTSGenerator:
             temperature=1,
             response_modalities=["audio"],
             speech_config=types.SpeechConfig(
-                multi_speaker_voice_config=types.MultiSpeakerVoiceConfig(
-                    speaker_voice_configs=voice_configs
-                ),
+                voice_config=voice_config
             ),
         )
         
