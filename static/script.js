@@ -222,7 +222,10 @@ async function generateAudio() {
         
         audioPlayer.load();
         document.getElementById('loadingSpinner').style.display = 'none';
-        document.getElementById('audioPlayer').style.display = 'block';
+        const playerDiv = document.getElementById('audioPlayer');
+        playerDiv.style.display = 'block';
+        playerDiv.classList.add('active');
+        console.log('✅ Player de áudio exibido');
         updateStats();
 
     } catch (error) {
