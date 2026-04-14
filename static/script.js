@@ -231,6 +231,21 @@ async function generateAudio() {
     } catch (error) {
         console.error('Erro ao gerar áudio:', error);
         document.getElementById('loadingSpinner').style.display = 'none';
+        
+        // Fallback automático para Web Speech API quando qualquer API falhar
+        const errorMsg = error.message || '';
+        if (errorMsg.includes('quota_exceeded') || 
+            errorMsg.includes('401') || 
+            errorMsg.includes('403') ||
+            errorMsg.includes('Invalid response status')) {
+            console.log('⚠️ API externa falhou. Usando Web Speech API (Gratuito)...');
+            showNotification('Usando voz do navegador (Web Speech API)...', 'warning');
+            await generateAudioWithWebSpeech();
+        } else {
+            // Erro desconhecido, tenta Web Speech mesmo assim
+            console.log('⚠️ Erro na API. Tentando Web Speech API como fallback...');
+            await generateAudioWithWebSpeech();
+        }
     }
 }
 
@@ -288,9 +303,12 @@ async function generateAudioWithWebSpeech() {
         const existing = document.getElementById('webspeech-notice');
         if (existing) existing.remove();
         
-        document.getElementById('audioPlayer').appendChild(notice);
-        document.getElementById('audioPlayer').style.display = 'block';
+        const playerDiv = document.getElementById('audioPlayer');
+        playerDiv.appendChild(notice);
+        playerDiv.style.display = 'block';
+        playerDiv.classList.add('active');
         document.getElementById('loadingSpinner').style.display = 'none';
+        console.log('✅ Web Speech API - Player exibido');
         
         // Quando terminar
         utterance.onend = () => {
