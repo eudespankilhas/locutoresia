@@ -216,13 +216,13 @@ class MiniDAWIntegrated {
                         <div class="control-divider"></div>
                         
                         <div class="control-section tool-btn-group">
-                            <button class="tool-btn ${track.effects.scissor ? 'active' : ''}" onclick="toggleMiniDAWScissorTrack('${track.id}')" title="Cortar" style="display: flex !important; align-items: center; justify-content: center;">
+                            <button class="tool-btn ${track.effects.scissor ? 'active' : ''}" onclick="toggleMiniDAWScissorTrack('${track.id}')" title="Cortar">
                                 <i class="fas fa-cut"></i>
                             </button>
-                            <button class="tool-btn" onclick="toggleMiniDAWTrackEffects('${track.id}')" title="Efeitos" style="display: flex !important; align-items: center; justify-content: center;">
-                                <i class="fas fa-copy"></i>
+                            <button class="tool-btn" onclick="toggleMiniDAWTrackEffects('${track.id}')" title="Efeitos">
+                                <i class="fas fa-sliders-h"></i>
                             </button>
-                            <button class="tool-btn" onclick="resetMiniDAWTrack('${track.id}')" title="Reset" style="display: flex !important; align-items: center; justify-content: center;">
+                            <button class="tool-btn" onclick="resetMiniDAWTrack('${track.id}')" title="Reset">
                                 <i class="fas fa-undo"></i>
                             </button>
                         </div>
