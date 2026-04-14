@@ -44,13 +44,9 @@ def generate_audio():
         if len(text) > 5000:
             return jsonify({'error': 'Texto muito longo (máximo 5000 caracteres)'}), 400
         try:
-            # Importar tts_generator_mock do backend (Edge TTS) não do core (Google Gemini)
-            import sys
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            if current_dir not in sys.path:
-                sys.path.insert(0, current_dir)
-            from tts_generator_mock import get_tts_generator
-            tts = get_tts_generator()
+            # Importar TTSGenerator do core (Google Gemini)
+            from core.tts_generator import TTSGenerator
+            tts = TTSGenerator()
             print(f"Usando gerador TTS: {type(tts).__name__}")
         except ImportError as e:
             print(f"Erro ao importar TTS: {e}")
