@@ -224,6 +224,9 @@
                         <a class="nav-link" href="/minidaw" target="_blank"><i class="fas fa-music me-1"></i>MiniDAW</a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="/minidaw-react" target="_blank"><i class="fas fa-robot me-1"></i>MiniDAW IA</a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="#"><i class="fas fa-tachometer-alt me-1"></i>Painel</a>
                     </li>
                     <li class="nav-item">
@@ -440,6 +443,127 @@
                     <!-- Voice cards will be dynamically generated here -->
                 </div>
 
+            </div>
+        </div>
+
+        <!-- MiniDAW Integrada -->
+        <div class="container mt-5">
+            <div class="row">
+                <div class="col-12">
+                    <div id="miniDAWPanel">
+                        <!-- Header -->
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="mb-0">
+                                <i class="fas fa-music me-2"></i>MiniDAW Integrada
+                            </h5>
+                            <button class="btn btn-sm btn-outline-light" onclick="miniDAW.toggleMiniDAW()">
+                                <i class="fas fa-chevron-up" id="miniDAWToggleIcon"></i>
+                            </button>
+                        </div>
+
+                        <!-- Conteúdo -->
+                        <div id="miniDAWContent">
+                            <!-- Quick Actions -->
+                            <div class="quick-actions">
+                                <button class="quick-action-btn" onclick="miniDAW.addTrack('voice')">
+                                    <i class="fas fa-microphone"></i> Adicionar Voz
+                                </button>
+                                <button class="quick-action-btn" onclick="miniDAW.addTrack('music')">
+                                    <i class="fas fa-music"></i> Adicionar Trilha
+                                </button>
+                                <button class="quick-action-btn" onclick="miniDAW.clearAllTracks()">
+                                    <i class="fas fa-trash"></i> Limpar Tudo
+                                </button>
+                                <button class="quick-action-btn" onclick="miniDAW.applyAutoFade()">
+                                    <i class="fas fa-magic"></i> Auto Fade
+                                </button>
+                                <button class="quick-action-btn" onclick="miniDAW.normalizeVolumes()">
+                                    <i class="fas fa-sliders-h"></i> Normalizar
+                                </button>
+                            </div>
+
+                            <!-- Timeline -->
+                            <div class="timeline-container">
+                                <div class="timeline-header">
+                                    <div class="playback-controls-enhanced">
+                                        <button class="control-btn" onclick="miniDAW.togglePlayback()">
+                                            <i class="fas fa-play" id="miniDAWPlayIcon"></i>
+                                        </button>
+                                        <button class="control-btn" onclick="miniDAW.stopPlayback()">
+                                            <i class="fas fa-stop"></i>
+                                        </button>
+                                    </div>
+                                    <div class="control-group">
+                                        <span class="control-label">Tempo:</span>
+                                        <span id="miniDAWCurrentTime">0:00</span>
+                                        <span>/</span>
+                                        <span id="miniDAWTotalDuration">0:00</span>
+                                    </div>
+                                    <div class="zoom-controls">
+                                        <button class="control-btn" onclick="miniDAW.zoomOut()">
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                        <span class="zoom-indicator" id="miniDAWZoomIndicator">100%</span>
+                                        <button class="control-btn" onclick="miniDAW.zoomIn()">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Drop Zone -->
+                            <div class="drop-zone" id="miniDAWDropZone">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <h6>Arraste arquivos de áudio aqui</h6>
+                                <p class="mb-0">ou clique para selecionar</p>
+                                <input type="file" id="miniDAWFileInput" multiple accept="audio/*" style="display: none;">
+                            </div>
+
+                            <!-- Tracks Container -->
+                            <div id="miniDAWTracksContainer">
+                                <!-- Tracks will be added here dynamically -->
+                            </div>
+
+                            <!-- Empty State -->
+                            <div id="miniDAWEmptyState" class="text-center py-5">
+                                <i class="fas fa-music fa-3x text-muted mb-3"></i>
+                                <h6>Nenhuma faixa adicionada</h6>
+                                <p class="text-muted">Adicione faixas de voz ou música para começar</p>
+                            </div>
+
+                            <!-- Export Controls -->
+                            <div class="mt-4">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <button class="format-btn btn btn-sm btn-outline-light active" onclick="miniDAW.setFormat('wav', this)">WAV</button>
+                                        <button class="format-btn btn btn-sm btn-outline-light" onclick="miniDAW.setFormat('mp3', this)">MP3</button>
+                                        <div id="miniDAWMP3BitrateGroup" class="d-none align-items-center gap-2 ms-2">
+                                            <select class="form-select form-select-sm" id="miniDAWMP3Bitrate" style="width: auto;">
+                                                <option value="128">128 kbps</option>
+                                                <option value="192" selected>192 kbps</option>
+                                                <option value="320">320 kbps</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <button class="btn btn-primary" onclick="miniDAW.exportMix()">
+                                            <i class="fas fa-download me-2"></i>Exportar Mix
+                                        </button>
+                                        <button class="btn btn-success ms-2" onclick="miniDAW.saveVipProject()">
+                                            <i class="fas fa-save me-2"></i>Salvar Projeto
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Mixing Status -->
+                            <div id="miniDAWMixingStatus" class="progress mt-3" style="display: none;">
+                                <div class="progress-bar" id="miniDAWProgressFill" style="width: 0%"></div>
+                                <small class="text-muted mt-1" id="miniDAWMixingStatusText">Processando...</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1687,6 +1811,56 @@
         let miniDAW;
         document.addEventListener('DOMContentLoaded', function() {
             miniDAW = new MiniDAWIntegrated();
+            
+            // Configurar drag & drop
+            const dropZone = document.getElementById('miniDAWDropZone');
+            const fileInput = document.getElementById('miniDAWFileInput');
+            
+            if (dropZone && fileInput) {
+                dropZone.addEventListener('click', () => fileInput.click());
+                
+                dropZone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    dropZone.classList.add('dragover');
+                });
+                
+                dropZone.addEventListener('dragleave', () => {
+                    dropZone.classList.remove('dragover');
+                });
+                
+                dropZone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    dropZone.classList.remove('dragover');
+                    
+                    const files = Array.from(e.dataTransfer.files).filter(file => 
+                        file.type.startsWith('audio/')
+                    );
+                    
+                    files.forEach(file => {
+                        const trackId = 'miniDAWTrack_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+                        miniDAW.addTrack('voice');
+                        setTimeout(() => {
+                            miniDAW.loadAudioFile(file, trackId);
+                        }, 100);
+                    });
+                });
+                
+                fileInput.addEventListener('change', (e) => {
+                    const files = Array.from(e.target.files).filter(file => 
+                        file.type.startsWith('audio/')
+                    );
+                    
+                    files.forEach(file => {
+                        const trackId = 'miniDAWTrack_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+                        miniDAW.addTrack('voice');
+                        setTimeout(() => {
+                            miniDAW.loadAudioFile(file, trackId);
+                        }, 100);
+                    });
+                    
+                    fileInput.value = '';
+                });
+            }
         });
 
         // 🆘 HELPERS DE DIAGNÓSTICO (use se der erro)
