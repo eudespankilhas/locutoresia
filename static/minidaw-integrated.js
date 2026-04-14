@@ -181,7 +181,9 @@ class MiniDAWIntegrated {
                         <div class="auto-fade-indicator" id="autoFade_${track.id}">
                             <i class="fas fa-magic"></i> OUT 1.05s
                         </div>
-                        <canvas id="waveform_${track.id}" class="waveform"></canvas>
+                        <canvas id="waveform_${track.id}" class="waveform" 
+                                onclick="cutMiniDAWTrackAtClick(event, '${track.id}')" 
+                                title="Clique para cortar a trilha neste ponto"></canvas>
                         <div class="fade-out-label" id="fadeOut_${track.id}" style="display: none;">
                             <span>OUT ${track.fadeOut.toFixed(1)}s</span>
                         </div>
@@ -1284,8 +1286,103 @@ class MiniDAWIntegrated {
     }
 
     cutTrackAtTime(trackId, cutTime) {
-        // Implementação simplificada de corte
-        this.showNotification(`Track cortado em ${cutTime.toFixed(2)}s`, 'success');
+        const track = this.tracks.find(t => t.id === trackId);
+        if (!track || !track.audioBuffer) return;
+
+        // Para o áudio se estiver tocando
+        if (track.isPlaying) {
+            this.stopTrackPlayback(trackId);
+        }
+
+        // Corta o buffer de áudio no tempo especificado
+        const sampleRate = track.audioBuffer.sampleRate;
+        const cutSample = Math.floor(cutTime * sampleRate);
+        
+        if (cutSample < track.audioBuffer.length) {
+            const newBuffer = this.audioContext.createBuffer(
+                track.audioBuffer.numberOfChannels,
+                cutSample,
+                sampleRate
+            );
+            
+            // Copia os dados de áudio até o ponto de corte
+            for (let channel = 0; channel < track.audioBuffer.numberOfChannels; channel++) {
+                const oldData = track.audioBuffer.getChannelData(channel);
+                const newData = newBuffer.getChannelData(channel);
+                newData.set(oldData.slice(0, cutSample));
+            }
+            
+            // Atualiza o buffer da track
+            track.audioBuffer = newBuffer;
+            track.duration = cutTime;
+            
+            // Recria os nós de áudio
+            this.createTrackNodes(track);
+            
+            // Atualiza a UI
+            this.updateTrackUI(track);
+            this.showNotification(`Track cortado em ${cutTime.toFixed(2)}s`, 'success');
+            
+            // Salva no localStorage
+            this.saveToLocalStorage();
+        }
+    }
+
+    // Implementação de fade out automático quando a voz terminar
+    detectVoiceEndAndFadeMusic() {
+        const voiceTracks = this.tracks.filter(t => t.type === 'voice' && t.audioBuffer);
+        const musicTracks = this.tracks.filter(t => t.type === 'music' && t.audioBuffer);
+
+        if (voiceTracks.length === 0 || musicTracks.length === 0) return;
+
+        // Encontra a track de voz mais longa
+        const longestVoiceTrack = voiceTracks.reduce((longest, track) => 
+            track.duration > longest.duration ? track : longest
+        );
+
+        // Aplica fade out de 1.05s nas trilhas musicais
+        musicTracks.forEach(track => {
+            // Configura o fade out para começar quando a voz terminar
+            track.fadeOutStartTime = longestVoiceTrack.duration - 1.05;
+            track.fadeOutDuration = 1.05;
+            
+            // Se a trilha musical for mais longa que a voz, aplica o fade
+            if (track.duration > longestVoiceTrack.duration) {
+                // Mostra indicador visual
+                const indicator = document.getElementById(`autoFade_${track.id}`);
+                if (indicator) {
+                    indicator.classList.add('active');
+                    indicator.innerHTML = `
+                        <i class="fas fa-magic"></i>
+                        Auto Fade: ${track.fadeOutDuration}s
+                    `;
+                }
+                
+                // Aplica o fade out na track
+                this.applyAutoFadeToTrack(track);
+            }
+        });
+
+        this.showNotification('Auto Fade configurado: trilha musical entrará em fade out quando a voz terminar', 'success');
+    }
+
+    applyAutoFadeToTrack(track) {
+        if (!track.audioBuffer || !track.fadeOutStartTime) return;
+
+        // Durante o playback, aplica o fade out no tempo correto
+        const nodes = this.trackNodes.get(track.id);
+        if (!nodes || !nodes.gainNode) return;
+
+        // Agenda o fade out
+        const fadeOutStart = track.fadeOutStartTime;
+        const fadeOutDuration = track.fadeOutDuration;
+        const currentTime = this.audioContext.currentTime;
+
+        // Se já estamos no tempo de fade out
+        if (currentTime >= fadeOutStart) {
+            nodes.gainNode.gain.setValueAtTime(track.volume / 100, currentTime);
+            nodes.gainNode.gain.linearRampToValueAtTime(0, currentTime + fadeOutDuration);
+        }
     }
 
     // Playback individual por track
@@ -2097,6 +2194,38 @@ window.sendToMiniDAW = async () => {
         console.error('Erro ao converter áudio:', error);
         alert('Erro ao preparar áudio para envio');
     }
+};
+
+// Funções globais para a interface
+window.cutMiniDAWTrackAtClick = (event, trackId) => {
+    const canvas = event.target;
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const width = rect.width;
+    
+    // Calcula o tempo do clique baseado na posição no canvas
+    const track = miniDAW.tracks.find(t => t.id === trackId);
+    if (track && track.duration) {
+        const clickTime = (x / width) * track.duration;
+        
+        // Confirmação do usuário
+        if (confirm(`Cortar trilha em ${clickTime.toFixed(2)}s?`)) {
+            miniDAW.cutTrackAtTime(trackId, clickTime);
+            
+            // Desenha linha de corte no waveform
+            const ctx = canvas.getContext('2d');
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, canvas.height);
+            ctx.stroke();
+        }
+    }
+};
+
+window.applyMiniDAWAutoFade = () => {
+    miniDAW.detectVoiceEndAndFadeMusic();
 };
 
 // Novos controles de efeitos
