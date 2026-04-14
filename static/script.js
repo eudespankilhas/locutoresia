@@ -239,7 +239,7 @@ async function generateAudio() {
             errorMsg.includes('403') ||
             errorMsg.includes('Invalid response status')) {
             console.log('⚠️ API externa falhou. Usando Web Speech API (Gratuito)...');
-            showNotification('Usando voz do navegador (Web Speech API)...', 'warning');
+            alert('⚠️ API externa indisponível. Usando voz do navegador (Web Speech API)...');
             await generateAudioWithWebSpeech();
         } else {
             // Erro desconhecido, tenta Web Speech mesmo assim

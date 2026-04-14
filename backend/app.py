@@ -25,6 +25,10 @@ def index():
 def minidaw():
     return render_template('minidaw.html')
 
+@app.route('/minidaw-react')
+def minidaw_react():
+    return render_template('minidaw-react.html')
+
 @app.route('/api/generate-audio', methods=['POST'])
 def generate_audio():
     try:
