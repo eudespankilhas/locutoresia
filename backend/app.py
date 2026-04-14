@@ -86,6 +86,20 @@ def get_voices():
 def get_stats():
     return jsonify({'voices_count': 50, 'audios_generated': 1247, 'active_projects': 89, 'users_count': 342})
 
+@app.route('/api/debug/env')
+def debug_env():
+    """Endpoint para debug de variáveis de ambiente"""
+    return jsonify({
+        'gemini_key_exists': bool(os.getenv('GEMINI_API_KEY')),
+        'gemini_key_length': len(os.getenv('GEMINI_API_KEY', '')),
+        'google_ai_studio_key_exists': bool(os.getenv('GOOGLE_AI_STUDIO_API_KEY')),
+        'google_ai_studio_key_length': len(os.getenv('GOOGLE_AI_STUDIO_API_KEY', '')),
+        'elevenlabs_key_exists': bool(os.getenv('ELEVENLABS_API_KEY')),
+        'elevenlabs_key_length': len(os.getenv('ELEVENLABS_API_KEY', '')),
+        'environment': os.getenv('FLASK_ENV', 'not_set'),
+        'vercel_env': os.getenv('VERCEL', 'not_set')
+    })
+
 @app.route('/api/synthesize-cloned-voice', methods=['POST'])
 def synthesize_cloned_voice():
     try:
