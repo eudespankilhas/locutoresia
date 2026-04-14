@@ -148,6 +148,9 @@ class MiniDAWIntegrated {
                         <span class="track-type-badge ${typeClass}">${typeLabel}</span>
                     </div>
                     <div class="track-header-actions" style="display:flex !important; gap:8px !important;">
+                        <button class="track-header-btn ${track.isPlaying ? 'playing' : ''}" onclick="toggleMiniDAWTrackPlayback('${track.id}')" title="Tocar" style="display:flex !important; background:linear-gradient(135deg,#3b82f6,#2563eb) !important; color:white !important;">
+                            <i class="fas ${track.isPlaying ? 'fa-pause' : 'fa-play'}"></i>
+                        </button>
                         <button class="track-header-btn ${track.muted ? 'active' : ''}" onclick="toggleMiniDAWMute('${track.id}')" title="Mudo">
                             <i class="fas fa-volume-mute"></i>
                         </button>
@@ -156,9 +159,6 @@ class MiniDAWIntegrated {
                         </button>
                         <button class="track-header-btn" onclick="removeMiniDAWTrack('${track.id}')" title="Remover" style="display:flex !important;">
                             <i class="fas fa-trash"></i>
-                        </button>
-                        <button class="track-header-btn" onclick="addMiniDAWTrack('${track.type}')" title="Criar Novo Track" style="display:flex !important; background:linear-gradient(135deg,#10b981,#059669) !important; color:white !important;">
-                            <i class="fas fa-plus"></i>
                         </button>
                     </div>
                 </div>
