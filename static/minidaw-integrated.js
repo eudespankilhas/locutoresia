@@ -189,6 +189,28 @@ class MiniDAWIntegrated {
                         </div>
                     </div>
                     
+                    <!-- Player Controls -->
+                    <div class="track-player-controls">
+                        <button class="player-btn ${track.isPlaying ? 'playing' : ''}" onclick="toggleMiniDAWTrackPlayback('${track.id}')" title="Play/Pause">
+                            <i class="fas ${track.isPlaying ? 'fa-pause' : 'fa-play'}"></i>
+                        </button>
+                        <div class="player-time">
+                            <span id="currentTime_${track.id}">0:00</span> / <span id="duration_${track.id}">0:00</span>
+                        </div>
+                    </div>
+                `}
+                    <div class="waveform-area">
+                        <div class="auto-fade-indicator" id="autoFade_${track.id}">
+                            <i class="fas fa-magic"></i> OUT 1.05s
+                        </div>
+                        <canvas id="waveform_${track.id}" class="waveform" 
+                                onclick="cutMiniDAWTrackAtClick(event, '${track.id}')" 
+                                title="Clique para cortar a trilha neste ponto"></canvas>
+                        <div class="fade-out-label" id="fadeOut_${track.id}" style="display: none;">
+                            <span>OUT ${track.fadeOut.toFixed(1)}s</span>
+                        </div>
+                    </div>
+                    
                     <!-- Controls Toolbar -->
                     <div class="track-controls-bar">
                         <div class="control-section fade-controls">
@@ -2118,6 +2140,93 @@ window.updateMiniDAWTrackVolume = (id, volume) => miniDAW.updateTrackVolume(id, 
 window.updateMiniDAWTrackPan = (id, pan) => miniDAW.updateTrackPan(id, pan);
 window.updateMiniDAWTrackFadeIn = (id, fadeIn) => miniDAW.updateTrackFadeIn(id, fadeIn);
 window.updateMiniDAWTrackFadeOut = (id, fadeOut) => miniDAW.updateTrackFadeOut(id, fadeOut);
+
+// Funções de controle de player individual
+window.toggleMiniDAWTrackPlayback = (trackId) => {
+    const track = miniDAW.tracks.find(t => t.id === trackId);
+    if (track && track.audioBuffer) {
+        track.isPlaying = !track.isPlaying;
+        if (track.isPlaying) {
+            miniDAW.playTrack(track);
+        } else {
+            miniDAW.stopTrack(track);
+        }
+        miniDAW.updateTrackUI(track);
+    }
+};
+
+window.updateMiniDAWTrackTime = (trackId) => {
+    const track = miniDAW.tracks.find(t => t.id === trackId);
+    if (track && track.audioBuffer) {
+        const currentTimeElement = document.getElementById(`currentTime_${trackId}`);
+        const durationElement = document.getElementById(`duration_${trackId}`);
+        if (currentTimeElement) {
+            currentTimeElement.textContent = miniDAW.formatTime(track.currentTime || 0);
+        }
+        if (durationElement) {
+            durationElement.textContent = miniDAW.formatTime(track.duration || 0);
+        }
+    }
+};
+
+// Adicionar método formatTime à classe MiniDAWIntegrated
+if (typeof MiniDAWIntegrated !== 'undefined') {
+    MiniDAWIntegrated.prototype.formatTime = function(seconds) {
+        if (!seconds || isNaN(seconds)) return '0:00';
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
+    
+    MiniDAWIntegrated.prototype.playTrack = function(track) {
+        const nodes = this.trackNodes.get(track.id);
+        if (!nodes || !track.audioBuffer) return;
+
+        // Create source node
+        const sourceNode = this.audioContext.createBufferSource();
+        sourceNode.buffer = track.audioBuffer;
+        
+        // Apply gain
+        if (nodes.gainNode) {
+            nodes.gainNode.gain.setValueAtTime(track.volume / 100, this.audioContext.currentTime);
+        }
+
+        // Connect to effect chain
+        sourceNode.connect(nodes.inputNode);
+        sourceNode.start(0, track.currentTime || 0);
+        
+        nodes.sourceNode = sourceNode;
+        track.isPlaying = true;
+        track.startTime = this.audioContext.currentTime - (track.currentTime || 0);
+
+        // Handle end
+        sourceNode.onended = () => {
+            track.isPlaying = false;
+            this.updateTrackUI(track);
+        };
+    };
+    
+    MiniDAWIntegrated.prototype.stopTrack = function(track) {
+        const nodes = this.trackNodes.get(track.id);
+        if (nodes && nodes.sourceNode) {
+            try {
+                nodes.sourceNode.stop();
+            } catch (e) {
+                // Already stopped
+            }
+            nodes.sourceNode = null;
+        }
+        track.isPlaying = false;
+        this.updateTrackUI(track);
+    };
+    
+    MiniDAWIntegrated.prototype.updateTrackUI = function(track) {
+        const playBtn = document.querySelector(`[onclick*="toggleMiniDAWTrackPlayback('${track.id}')"] i`);
+        if (playBtn) {
+            playBtn.className = track.isPlaying ? 'fas fa-pause' : 'fas fa-play';
+        }
+    };
+}
 window.toggleMiniDAWEffect = (id, effect) => miniDAW.toggleEffect(id, effect);
 window.updateMiniDAWEQ = (id, band, value) => miniDAW.updateEQ(id, band, value);
 window.toggleMiniDAWPlayback = () => miniDAW.togglePlayback();
