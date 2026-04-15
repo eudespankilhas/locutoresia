@@ -424,6 +424,84 @@ def voxcraft_logs():
         return jsonify({'error': str(e)}), 500
 
 
+# Importar integração LMNT
+from lmnt_integration import lmnt_integration
+
+# Endpoints LMNT Integration
+@app.route('/api/lmnt/status', methods=['GET'])
+def lmnt_status():
+    """Verifica status da integração LMNT"""
+    return jsonify(lmnt_integration.get_status())
+
+@app.route('/api/lmnt/voices', methods=['GET'])
+def lmnt_voices():
+    """Lista vozes disponíveis no LMNT"""
+    return jsonify(lmnt_integration.get_available_voices())
+
+@app.route('/api/lmnt/generate', methods=['POST'])
+def lmnt_generate():
+    """Gera áudio usando LMNT"""
+    try:
+        data = request.get_json()
+        if not data or 'text' not in data:
+            return jsonify({'error': 'Texto não fornecido'}), 400
+        
+        text = data['text'].strip()
+        voice_id = data.get('voice_id')
+        format_type = data.get('format', 'mp3')
+        
+        if len(text) == 0:
+            return jsonify({'error': 'Texto não pode estar vazio'}), 400
+        
+        if len(text) > 1000:  # Limite do LMNT
+            return jsonify({'error': 'Texto muito longo (máximo 1000 caracteres)'}), 400
+        
+        result = lmnt_integration.generate_speech(text, voice_id, format_type)
+        
+        if 'error' in result:
+            return jsonify(result), 500
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/lmnt/clone', methods=['POST'])
+def lmnt_clone():
+    """Clona uma nova voz no LMNT"""
+    try:
+        if 'audio' not in request.files:
+            return jsonify({'error': 'Arquivo de áudio não fornecido'}), 400
+        
+        audio_file = request.files['audio']
+        name = request.form.get('name', '').strip()
+        description = request.form.get('description', '').strip()
+        enhance = request.form.get('enhance', 'true').lower() == 'true'
+        
+        if not name:
+            return jsonify({'error': 'Nome da voz não fornecido'}), 400
+        
+        if not audio_file.filename:
+            return jsonify({'error': 'Arquivo de áudio inválido'}), 400
+        
+        # Ler arquivo de áudio
+        audio_data = audio_file.read()
+        
+        result = lmnt_integration.clone_voice(name, audio_data, description, enhance)
+        
+        if 'error' in result:
+            return jsonify(result), 500
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/lmnt/voice/<voice_id>', methods=['GET'])
+def lmnt_voice_info(voice_id):
+    """Obtém informações de uma voz específica"""
+    return jsonify(lmnt_integration.get_voice_info(voice_id))
+
 # Handler para Vercel serverless
 from flask import Flask
 

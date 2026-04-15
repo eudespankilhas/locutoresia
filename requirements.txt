@@ -8,3 +8,4 @@ edge-tts==6.1.12
 elevenlabs==2.43.0
 numpy==1.26.4
 gTTS==2.5.4
+lmnt==2.4.0

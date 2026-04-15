@@ -1,5 +1,5 @@
 # To run this code you need to install the following dependencies:
-# pip install google-genai elevenlabs python-dotenv edge-tts gtts
+# pip install google-genai elevenlabs python-dotenv edge-tts gtts pyttsx3
 
 import mimetypes
 import os
@@ -9,9 +9,16 @@ import requests
 import asyncio
 import edge_tts
 import io
+import threading
 from gtts import gTTS
 from google import genai
 from google.genai import types
+
+# Importar pyttsx3 se disponível
+try:
+    import pyttsx3
+except ImportError:
+    pyttsx3 = None
 
 # Carregar variáveis de ambiente do arquivo .env
 try:

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LMNT Voice Cloner - Web App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .loading {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .audio-player {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-microphone text-purple-600 text-2xl"></i>
+                    <h1 class="text-2xl font-bold text-gray-900">LMNT Voice Cloner</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span id="connection-status" class="text-sm text-gray-500">
+                        <i class="fas fa-circle text-gray-400"></i> Desconectado
+                    </span>
+                    <button onclick="checkConnection()" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">
+                        <i class="fas fa-sync-alt mr-2"></i>Conectar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Account Info -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">
+                <i class="fas fa-user-circle mr-2 text-purple-600"></i>Informações da Conta
+            </h2>
+            <div id="account-info" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-purple-600" id="plan-type">-</div>
+                    <div class="text-sm text-gray-500">Plano</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-blue-600" id="character-limit">-</div>
+                    <div class="text-sm text-gray-500">Limite de Caracteres</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-green-600" id="commercial-use">-</div>
+                    <div class="text-sm text-gray-500">Uso Comercial</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Voice Generation -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">
+                <i class="fas fa-microphone-alt mr-2 text-purple-600"></i>Gerar Áudio
+            </h2>
+            
+            <div class="space-y-4">
+                <!-- Voice Selection -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Selecionar Voz</label>
+                    <select id="voice-select" title="Selecione uma voz para síntese" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        <option value="">Carregando vozes...</option>
+                    </select>
+                </div>
+
+                <!-- Text Input -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Texto para Síntese</label>
+                    <textarea id="text-input" rows="4" 
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        placeholder="Digite o texto que você quer transformar em áudio...">Olá! Este é um teste do LMNT Voice Cloner na web.</textarea>
+                </div>
+
+                <!-- Format Selection -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Formato de Áudio</label>
+                    <div class="flex space-x-4">
+                        <label class="flex items-center">
+                            <input type="radio" name="format" value="mp3" checked class="mr-2">
+                            <span>MP3</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="format" value="wav" class="mr-2">
+                            <span>WAV</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Generate Button -->
+                <button onclick="generateSpeech()" 
+                    class="w-full px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-medium">
+                    <i class="fas fa-play mr-2"></i>Gerar Áudio
+                </button>
+
+                <!-- Audio Player -->
+                <div id="audio-container" class="hidden">
+                    <div class="audio-player rounded-lg p-4 text-white">
+                        <h3 class="text-lg font-semibold mb-3">Áudio Gerado</h3>
+                        <audio id="audio-player" controls class="w-full mb-3"></audio>
+                        <div class="flex justify-between items-center">
+                            <span id="audio-info" class="text-sm"></span>
+                            <button onclick="downloadAudio()" class="px-4 py-2 bg-white text-purple-600 rounded-lg hover:bg-gray-100 transition">
+                                <i class="fas fa-download mr-2"></i>Baixar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Voice Management -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">
+                <i class="fas fa-users mr-2 text-purple-600"></i>Gerenciamento de Vozes
+            </h2>
+            
+            <!-- Voice Cloning -->
+            <div class="mb-6">
+                <h3 class="text-lg font-medium mb-3">Clonar Nova Voz</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Nome da Voz</label>
+                        <input type="text" id="clone-name" 
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            placeholder="Minha Voz Personalizada">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Arquivo de Áudio (WAV/MP3)</label>
+                        <input type="file" id="clone-audio" accept="audio/*" title="Selecione um arquivo de áudio para clonar" placeholder="Escolha um arquivo WAV ou MP3"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Descrição (Opcional)</label>
+                        <input type="text" id="clone-description" 
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            placeholder="Descrição da voz clonada">
+                    </div>
+                    
+                    <button onclick="cloneVoice()" 
+                        class="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium">
+                        <i class="fas fa-clone mr-2"></i>Clonar Voz
+                    </button>
+                </div>
+            </div>
+
+            <!-- Voice List -->
+            <div>
+                <h3 class="text-lg font-medium mb-3">Vozes Disponíveis</h3>
+                <div id="voices-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Voices will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
+            <div class="text-center">
+                <i class="fas fa-spinner loading text-4xl text-purple-600 mb-4"></i>
+                <p id="loading-message" class="text-gray-700">Processando...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="hidden fixed bottom-4 right-4 bg-white rounded-lg shadow-lg p-4 max-w-sm z-50">
+        <div class="flex items-center">
+            <i id="toast-icon" class="fas fa-check-circle text-green-500 mr-3"></i>
+            <span id="toast-message" class="text-gray-700"></span>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

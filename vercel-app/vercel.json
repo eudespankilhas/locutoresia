@@ -1,0 +1,28 @@
+{
+  "version": 2,
+  "name": "lmnt-voice-cloner",
+  "builds": [
+    {
+      "src": "api/lmnt.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ],
+  "functions": {
+    "api/lmnt.py": {
+      "maxDuration": 30
+    }
+  },
+  "env": {
+    "LMNT_API_KEY": "@lmnt-api-key"
+  }
+}

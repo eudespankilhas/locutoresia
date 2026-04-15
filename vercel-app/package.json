@@ -1,0 +1,29 @@
+{
+  "name": "lmnt-voice-cloner-web",
+  "version": "1.0.0",
+  "description": "Web application for LMNT Voice Cloner with Vercel deployment",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'Build complete'",
+    "deploy": "vercel --prod"
+  },
+  "keywords": [
+    "lmnt",
+    "voice-cloning",
+    "tts",
+    "speech-synthesis",
+    "vercel"
+  ],
+  "author": "LMNT Voice Cloner Team",
+  "license": "MIT",
+  "dependencies": {
+    "lmnt": "^2.4.0"
+  },
+  "devDependencies": {
+    "vercel": "^32.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

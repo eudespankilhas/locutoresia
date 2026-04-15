@@ -1,0 +1,58 @@
+name: Deploy to Vercel
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: Install LMNT SDK
+      run: |
+        pip install lmnt
+        
+    - name: Install Vercel CLI
+      run: |
+        npm install --global vercel
+        
+    - name: Pull Vercel Environment Information
+      id: vercel-env
+      run: |
+        echo "vercel_org_id=$(vercel ls --json | jq -r '.[0].orgId')" >> $GITHUB_ENV
+        echo "vercel_project_id=$(vercel ls --json | jq -r '.[0].id')" >> $GITHUB_ENV
+      env:
+        VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+        VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        
+    - name: Deploy to Vercel
+      run: |
+        vercel --prod --token ${{ secrets.VERCEL_TOKEN }}
+      env:
+        VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+        VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        LMNT_API_KEY: ${{ secrets.LMNT_API_KEY }}
