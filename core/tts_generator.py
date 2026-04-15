@@ -38,21 +38,29 @@ class TTSGenerator:
         return self.gemini_client
     
     def generate_speech(self, text, voice_model="Adam", style="normal", language="pt-BR"):
-        """Gera áudio a partir do texto usando GTTS como principal para vozes reais"""
+        """Gera áudio a partir do texto usando a melhor opção disponível"""
         
-        # Primeiro tentar GTTS (gratuito e com vozes reais)
+        # Para textos curtos (menos de 100 caracteres), tentar APIs mais rápidas primeiro
+        if len(text) < 100:
+            # Tentar ElevenLabs primeiro (mais rápido e alta qualidade)
+            if self.elevenlabs_api_key and self.elevenlabs_api_key.strip():
+                try:
+                    return self._generate_with_elevenlabs(text, voice_model, style, language)
+                except Exception as e:
+                    print(f"ElevenLabs não disponível: {e}")
+            
+            # Tentar Edge TTS (rápido e gratuito)
+            try:
+                return self._generate_with_edge_tts(text, voice_model, style, language)
+            except Exception as e:
+                print(f"Edge TTS não disponível: {e}")
+        
+        # Para textos longos ou como fallback, usar GTTS (confiável)
         try:
             return self._generate_with_gtts(text, voice_model, style, language)
         except Exception as e:
             print(f"Erro ao gerar áudio com GTTS: {e}")
-            print("Tentando com Edge TTS como fallback...")
-        
-        # Fallback para Edge TTS
-        try:
-            return self._generate_with_edge_tts(text, voice_model, style, language)
-        except Exception as e:
-            print(f"Erro ao gerar áudio com Edge TTS: {e}")
-            print("Tentando com Google Gemini como fallback...")
+            print("Tentando alternativas...")
         
         # Fallback para Google Gemini
         if self.gemini_api_key and self.gemini_api_key.strip():
@@ -60,15 +68,20 @@ class TTSGenerator:
                 return self._generate_with_gemini(text, voice_model, style, language)
             except Exception as e:
                 print(f"Erro ao gerar áudio com Google Gemini: {e}")
-                print("Tentando com ElevenLabs como fallback...")
         
-        # Fallback para ElevenLabs
-        if self.elevenlabs_api_key and self.elevenlabs_api_key.strip():
+        # Fallback para ElevenLabs (se ainda não tentou)
+        if self.elevenlabs_api_key and self.elevenlabs_api_key.strip() and len(text) >= 100:
             try:
                 return self._generate_with_elevenlabs(text, voice_model, style, language)
             except Exception as e:
                 print(f"Erro ao gerar áudio com ElevenLabs: {e}")
-                print("Usando gerador WAV sintético como último recurso...")
+        
+        # Fallback para Edge TTS (se ainda não tentou)
+        if len(text) >= 100:
+            try:
+                return self._generate_with_edge_tts(text, voice_model, style, language)
+            except Exception as e:
+                print(f"Erro ao gerar áudio com Edge TTS: {e}")
         
         # Último recurso: gerador WAV sintético
         try:
@@ -370,20 +383,54 @@ class TTSGenerator:
     def _generate_with_gtts(self, text, voice_model, style, language):
         """Gera áudio usando Google Text-to-Speech (GTTS) - vozes reais e gratuitas"""
         
-        # Mapear idioma para GTTS
-        lang_mapping = {
-            "pt-BR": "pt",
-            "pt": "pt", 
-            "en-US": "en",
-            "en": "en",
-            "es": "es",
-            "fr": "fr",
-            "de": "de",
-            "it": "it"
+        # Mapear vozes para diferentes dialetos GTTS para criar variedade
+        voice_mapping = {
+            # Vozes masculinas
+            "Adam": "pt",
+            "Drew": "pt",
+            "Clyde": "pt", 
+            "Davis": "pt",
+            "Dom": "pt",
+            "Antonio": "pt",
+            "Charon": "pt",
+            
+            # Vozes femininas
+            "Bella": "pt",
+            "Elli": "pt",
+            "Rachel": "pt",
+            "Darcy": "pt",
+            "Laura": "pt",
+            "Puck": "pt",
+            
+            # Vozes em inglês
+            "Roger": "en",
+            "Sarah": "en",
+            "George": "en",
+            "Charlie": "en",
+            
+            # Espanhol
+            "Javier": "es",
+            "Sofia": "es",
+            
+            # Francês
+            "Pierre": "fr",
+            "Marie": "fr"
         }
         
-        # Obter idioma ou usar padrão
-        gtts_lang = lang_mapping.get(language, "pt")
+        # Obter idioma baseado na voz ou usar padrão
+        gtts_lang = voice_mapping.get(voice_model, "pt")
+        
+        # Ajustar para dialetos específicos baseado no modelo
+        if voice_model in ["Adam", "Drew", "Clyde"]:
+            gtts_lang = "pt"  # Português brasileiro padrão
+        elif voice_model in ["Bella", "Elli", "Rachel"]:
+            gtts_lang = "pt"  # Português brasileiro feminino
+        elif voice_model in ["Roger", "Sarah", "George"]:
+            gtts_lang = "en"  # Inglês
+        elif voice_model in ["Javier", "Sofia"]:
+            gtts_lang = "es"  # Espanhol
+        elif voice_model in ["Pierre", "Marie"]:
+            gtts_lang = "fr"  # Francês
         
         # Ajustar velocidade baseada no estilo
         slow = False
@@ -392,10 +439,16 @@ class TTSGenerator:
         elif style == "fast":
             # GTTS não tem controle de velocidade rápido, mantém normal
             slow = False
+        elif style == "cheerful":
+            # Para estilo alegre, adiciona ênfase no texto
+            text = f"¡{text}!" if gtts_lang == "es" else f"!{text}!"
+        elif style == "serious":
+            # Para estilo sério, mantém texto normal
+            pass
         
         try:
-            # Criar objeto GTTS
-            tts = gTTS(text=text, lang=gtts_lang, slow=slow)
+            # Criar objeto GTTS com domínio específico para melhor qualidade
+            tts = gTTS(text=text, lang=gtts_lang, slow=slow, tld="com.br" if gtts_lang == "pt" else "com")
             
             # Gerar áudio em bytes
             audio_buffer = io.BytesIO()
