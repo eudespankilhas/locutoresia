@@ -5,3 +5,5 @@ requests==2.32.2
 gunicorn==21.2.0
 Werkzeug==2.3.7
 edge-tts==6.1.12
+elevenlabs==2.43.0
+numpy==1.26.4

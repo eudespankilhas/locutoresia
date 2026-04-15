@@ -13,6 +13,10 @@
       "destination": "/static/$1"
     },
     {
+      "source": "/api/(.*)",
+      "destination": "backend/app.py"
+    },
+    {
       "source": "/(.*)",
       "destination": "backend/app.py"
     }
@@ -20,5 +24,10 @@
   "env": {
     "FLASK_ENV": "production",
     "VERCEL": "1"
+  },
+  "functions": {
+    "backend/app.py": {
+      "maxDuration": 30
+    }
   }
 }
