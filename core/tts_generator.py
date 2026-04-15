@@ -1,5 +1,5 @@
 # To run this code you need to install the following dependencies:
-# pip install google-genai elevenlabs python-dotenv edge-tts
+# pip install google-genai elevenlabs python-dotenv edge-tts gtts
 
 import mimetypes
 import os
@@ -8,6 +8,8 @@ import struct
 import requests
 import asyncio
 import edge_tts
+import io
+from gtts import gTTS
 from google import genai
 from google.genai import types
 
@@ -36,9 +38,16 @@ class TTSGenerator:
         return self.gemini_client
     
     def generate_speech(self, text, voice_model="Adam", style="normal", language="pt-BR"):
-        """Gera áudio a partir do texto usando Edge TTS como principal e APIs pagas como fallback"""
+        """Gera áudio a partir do texto usando GTTS como principal para vozes reais"""
         
-        # Primeiro tentar Edge TTS (gratuito e sem API key)
+        # Primeiro tentar GTTS (gratuito e com vozes reais)
+        try:
+            return self._generate_with_gtts(text, voice_model, style, language)
+        except Exception as e:
+            print(f"Erro ao gerar áudio com GTTS: {e}")
+            print("Tentando com Edge TTS como fallback...")
+        
+        # Fallback para Edge TTS
         try:
             return self._generate_with_edge_tts(text, voice_model, style, language)
         except Exception as e:
@@ -357,6 +366,46 @@ class TTSGenerator:
         )
         
         return header + audio_data.tobytes()
+    
+    def _generate_with_gtts(self, text, voice_model, style, language):
+        """Gera áudio usando Google Text-to-Speech (GTTS) - vozes reais e gratuitas"""
+        
+        # Mapear idioma para GTTS
+        lang_mapping = {
+            "pt-BR": "pt",
+            "pt": "pt", 
+            "en-US": "en",
+            "en": "en",
+            "es": "es",
+            "fr": "fr",
+            "de": "de",
+            "it": "it"
+        }
+        
+        # Obter idioma ou usar padrão
+        gtts_lang = lang_mapping.get(language, "pt")
+        
+        # Ajustar velocidade baseada no estilo
+        slow = False
+        if style == "slow":
+            slow = True
+        elif style == "fast":
+            # GTTS não tem controle de velocidade rápido, mantém normal
+            slow = False
+        
+        try:
+            # Criar objeto GTTS
+            tts = gTTS(text=text, lang=gtts_lang, slow=slow)
+            
+            # Gerar áudio em bytes
+            audio_buffer = io.BytesIO()
+            tts.write_to_fp(audio_buffer)
+            audio_data = audio_buffer.getvalue()
+            
+            return audio_data
+            
+        except Exception as e:
+            raise Exception(f"Erro ao gerar áudio com GTTS: {str(e)}")
 
 
 def save_binary_file(file_name, data):
