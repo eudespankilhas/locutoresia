@@ -502,6 +502,35 @@ def lmnt_voice_info(voice_id):
     """Obtém informações de uma voz específica"""
     return jsonify(lmnt_integration.get_voice_info(voice_id))
 
+@app.route('/api/test-env', methods=['GET'])
+def test_environment():
+    """Testa variáveis de ambiente configuradas"""
+    env_vars = {
+        'LMNT_API_KEY': bool(os.environ.get('LMNT_API_KEY')),
+        'GEMINI_API_KEY': bool(os.environ.get('GEMINI_API_KEY')),
+        'GOOGLE_AI_STUDIO_API_KEY': bool(os.environ.get('GOOGLE_AI_STUDIO_API_KEY')),
+        'ELEVENLABS_API_KEY': bool(os.environ.get('ELEVENLABS_API_KEY')),
+        'VERCEL_ENV': os.environ.get('VERCEL_ENV', 'unknown'),
+        'NODE_ENV': os.environ.get('NODE_ENV', 'unknown')
+    }
+    
+    # Testar importação LMNT
+    lmnt_import_test = False
+    lmnt_error = None
+    try:
+        import lmnt
+        lmnt_import_test = True
+    except Exception as e:
+        lmnt_error = str(e)
+    
+    return jsonify({
+        'environment_variables': env_vars,
+        'lmnt_import_success': lmnt_import_test,
+        'lmnt_import_error': lmnt_error,
+        'python_version': os.sys.version,
+        'working_directory': os.getcwd()
+    })
+
 # Handler para Vercel serverless
 from flask import Flask
 
