@@ -383,72 +383,63 @@ class TTSGenerator:
     def _generate_with_gtts(self, text, voice_model, style, language):
         """Gera áudio usando Google Text-to-Speech (GTTS) - vozes reais e gratuitas"""
         
-        # Mapear vozes para diferentes dialetos GTTS para criar variedade
-        voice_mapping = {
-            # Vozes masculinas
-            "Adam": "pt",
-            "Drew": "pt",
-            "Clyde": "pt", 
-            "Davis": "pt",
-            "Dom": "pt",
-            "Antonio": "pt",
-            "Charon": "pt",
+        # Mapear vozes para diferentes TLDs para criar variedade real
+        voice_config = {
+            # Vozes masculinas - diferentes TLDs para criar variedade
+            "Adam": {"lang": "pt", "tld": "com.br"},
+            "Drew": {"lang": "pt", "tld": "pt"},  # Portugal
+            "Clyde": {"lang": "pt", "tld": "com.mx"},  # México com português
+            "Davis": {"lang": "pt", "tld": "co"},  # Colômbia
+            "Dom": {"lang": "pt", "tld": "com.ar"},  # Argentina
+            "Antonio": {"lang": "pt", "tld": "es"},  # Espanha com português
+            "Charon": {"lang": "pt", "tld": "fr"},  # França com português
             
-            # Vozes femininas
-            "Bella": "pt",
-            "Elli": "pt",
-            "Rachel": "pt",
-            "Darcy": "pt",
-            "Laura": "pt",
-            "Puck": "pt",
+            # Vozes femininas - TLDs diferentes
+            "Bella": {"lang": "pt", "tld": "com.br"},
+            "Elli": {"lang": "pt", "tld": "it"},  # Itália com português
+            "Rachel": {"lang": "pt", "tld": "de"},  # Alemanha com português
+            "Darcy": {"lang": "pt", "tld": "ca"},  # Canadá com português
+            "Laura": {"lang": "pt", "tld": "com.au"},  # Austrália com português
+            "Puck": {"lang": "pt", "tld": "co.uk"},  # Reino Unido com português
             
-            # Vozes em inglês
-            "Roger": "en",
-            "Sarah": "en",
-            "George": "en",
-            "Charlie": "en",
+            # Vozes em inglês - diferentes sotaques
+            "Roger": {"lang": "en", "tld": "com"},  # EUA
+            "Sarah": {"lang": "en", "tld": "co.uk"},  # Reino Unido
+            "George": {"lang": "en", "tld": "com.au"},  # Austrália
+            "Charlie": {"lang": "en", "tld": "ca"},  # Canadá
             
-            # Espanhol
-            "Javier": "es",
-            "Sofia": "es",
+            # Espanhol - diferentes sotaques
+            "Javier": {"lang": "es", "tld": "es"},  # Espanha
+            "Sofia": {"lang": "es", "tld": "com.mx"},  # México
             
-            # Francês
-            "Pierre": "fr",
-            "Marie": "fr"
+            # Francês - diferentes sotaques
+            "Pierre": {"lang": "fr", "tld": "fr"},  # França
+            "Marie": {"lang": "fr", "tld": "ca"}  # Canadá francês
         }
         
-        # Obter idioma baseado na voz ou usar padrão
-        gtts_lang = voice_mapping.get(voice_model, "pt")
+        # Obter configuração da voz ou usar padrão
+        config = voice_config.get(voice_model, {"lang": "pt", "tld": "com.br"})
+        gtts_lang = config["lang"]
+        tld = config["tld"]
         
-        # Ajustar para dialetos específicos baseado no modelo
-        if voice_model in ["Adam", "Drew", "Clyde"]:
-            gtts_lang = "pt"  # Português brasileiro padrão
-        elif voice_model in ["Bella", "Elli", "Rachel"]:
-            gtts_lang = "pt"  # Português brasileiro feminino
-        elif voice_model in ["Roger", "Sarah", "George"]:
-            gtts_lang = "en"  # Inglês
-        elif voice_model in ["Javier", "Sofia"]:
-            gtts_lang = "es"  # Espanhol
-        elif voice_model in ["Pierre", "Marie"]:
-            gtts_lang = "fr"  # Francês
-        
-        # Ajustar velocidade baseada no estilo
-        slow = False
+        # Ajustar texto baseado no estilo
+        processed_text = text
         if style == "slow":
-            slow = True
+            # Adicionar pausas para falar mais devagar
+            processed_text = text.replace(".", ". ").replace(",", ", ")
         elif style == "fast":
-            # GTTS não tem controle de velocidade rápido, mantém normal
-            slow = False
+            # Remover pausas para falar mais rápido
+            processed_text = text.replace(". ", ".").replace(", ", ",")
         elif style == "cheerful":
-            # Para estilo alegre, adiciona ênfase no texto
-            text = f"¡{text}!" if gtts_lang == "es" else f"!{text}!"
+            # Adicionar ênfase para tom alegre
+            processed_text = f"!{text}!" if gtts_lang == "es" else f"!{text}!"
         elif style == "serious":
-            # Para estilo sério, mantém texto normal
+            # Manter texto normal para tom sério
             pass
         
         try:
-            # Criar objeto GTTS com domínio específico para melhor qualidade
-            tts = gTTS(text=text, lang=gtts_lang, slow=slow, tld="com.br" if gtts_lang == "pt" else "com")
+            # Criar objeto GTTS com configuração específica para variedade real
+            tts = gTTS(text=processed_text, lang=gtts_lang, slow=(style == "slow"), tld=tld)
             
             # Gerar áudio em bytes
             audio_buffer = io.BytesIO()
