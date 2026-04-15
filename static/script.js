@@ -232,20 +232,8 @@ async function generateAudio() {
         console.error('Erro ao gerar áudio:', error);
         document.getElementById('loadingSpinner').style.display = 'none';
         
-        // Fallback automático para Web Speech API quando qualquer API falhar
-        const errorMsg = error.message || '';
-        if (errorMsg.includes('quota_exceeded') || 
-            errorMsg.includes('401') || 
-            errorMsg.includes('403') ||
-            errorMsg.includes('Invalid response status')) {
-            console.log('⚠️ API externa falhou. Usando Web Speech API (Gratuito)...');
-            alert('⚠️ API externa indisponível. Usando voz do navegador (Web Speech API)...');
-            await generateAudioWithWebSpeech();
-        } else {
-            // Erro desconhecido, tenta Web Speech mesmo assim
-            console.log('⚠️ Erro na API. Tentando Web Speech API como fallback...');
-            await generateAudioWithWebSpeech();
-        }
+        // Mostrar erro real em vez de fazer fallback
+        alert('Erro ao gerar áudio: ' + error.message + '\n\nPor favor, tente novamente ou contate o suporte.');
     }
 }
 
