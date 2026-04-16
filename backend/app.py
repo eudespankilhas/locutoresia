@@ -23,11 +23,33 @@ def index():
 
 @app.route('/minidaw')
 def minidaw():
+    """MiniDAW Interface"""
     return render_template('minidaw.html')
 
 @app.route('/minidaw-react')
 def minidaw_react():
+    """MiniDAW React Interface"""
     return render_template('minidaw-react.html')
+
+@app.route('/noticias')
+def noticias():
+    """Página de Notícias"""
+    return render_template('noticias.html')
+
+@app.route('/busca')
+def busca():
+    """Página de Busca"""
+    return render_template('busca.html')
+
+@app.route('/painel')
+def painel():
+    """Página do Painel"""
+    return render_template('painel.html')
+
+@app.route('/contato')
+def contato():
+    """Página de Contato"""
+    return render_template('contato.html')
 
 @app.route('/api/generate-audio', methods=['POST'])
 def generate_audio():
