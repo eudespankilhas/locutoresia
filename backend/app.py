@@ -424,6 +424,9 @@ def voxcraft_logs():
         return jsonify({'error': str(e)}), 500
 
 
+# Importar handlers de upload
+from upload_handler import handle_upload, handle_voice_upload
+
 # Importar integração LMNT
 from lmnt_integration import lmnt_integration
 
@@ -542,6 +545,29 @@ if os.environ.get('VERCEL'):
     app.static_folder = os.path.join(base_dir, 'static')
     app.config['UPLOAD_FOLDER'] = '/tmp/generated_audio'
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    
+    # Configurações adicionais para Vercel
+    app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB
+    app.config['UPLOAD_EXTENSIONS'] = ['.wav', '.mp3', '.ogg', '.m4a']
+
+# Endpoints de Upload
+@app.route('/api/upload', methods=['POST'])
+def upload_file():
+    """Endpoint genérico para upload de arquivos"""
+    try:
+        result, status = handle_upload(request)
+        return jsonify(result), status
+    except Exception as e:
+        return jsonify({'error': f'Erro no upload: {str(e)}'}), 500
+
+@app.route('/api/upload/voice', methods=['POST'])
+def upload_voice():
+    """Endpoint específico para upload de voz para clonagem"""
+    try:
+        result, status = handle_voice_upload(request)
+        return jsonify(result), status
+    except Exception as e:
+        return jsonify({'error': f'Erro no upload de voz: {str(e)}'}), 500
 
 def handler(request, response):
     """Handler para Vercel serverless functions"""
