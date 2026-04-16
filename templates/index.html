@@ -341,6 +341,18 @@
                                 <option value="slow">Lento</option>
                                 <option value="cheerful">Alegre</option>
                                 <option value="serious">Sério</option>
+                                <option value="whisper">Sussurrado</option>
+                                <option value="excited">Empolgado</option>
+                                <option value="calm">Calmo</option>
+                                <option value="authoritative">Autoritário</option>
+                                <option value="friendly">Amigável</option>
+                                <option value="gentle">Suave</option>
+                                <option value="robot">Robótico</option>
+                                <option value="news">Jornalístico</option>
+                                <option value="sports">Esportivo</option>
+                                <option value="narration">Narração</option>
+                                <option value="advertisement">Publicitário</option>
+                                <option value="documentary">Documentário</option>
                             </select>
                         </div>
                     </div>
@@ -1865,15 +1877,77 @@
         document.addEventListener('DOMContentLoaded', function() {
             miniDAW = new MiniDAWIntegrated();
             
-            // Configurar drag & drop
-            const dropZone = document.getElementById('miniDAWDropZone');
-            const fileInput = document.getElementById('miniDAWFileInput');
-            
-            if (dropZone && fileInput) {
-                dropZone.addEventListener('click', () => fileInput.click());
+            // ── Gerar áudio (Edge TTS ou ElevenLabs) ──────────────────────────────────
+            async function generateAudio() {
+                const text = document.getElementById('textInput').value.trim();
+                const voiceId = document.getElementById('voiceSelect').value;
+                const speechStyle = document.getElementById('speechStyle').value;
                 
-                dropZone.addEventListener('dragover', (e) => {
-                    e.preventDefault();
+                console.log(`🎙️ Gerando áudio: voz=${voiceId}, estilo=${speechStyle}`);
+                
+                // Tentar ElevenLabs primeiro
+                try {
+                    const response = await fetch('/api/generate-audio', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            text: text,
+                            voice_model: voiceId,
+                            style: speechStyle,
+                            language: 'pt-BR'
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.success) {
+                            console.log('✅ Áudio gerado com ElevenLabs:', data.filename);
+                            playGeneratedAudio(data.filename);
+                            return;
+                        }
+                    }
+                } catch (error) {
+                    console.log('❌ ElevenLabs falhou, tentando LMNT:', error);
+                }
+                
+                // Tentar LMNT segundo
+                try {
+                    const lmntResponse = await fetch('/api/lmnt/generate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            text: text,
+                            voice_id: voiceId,
+                            format: 'mp3'
+                        })
+                    });
+                    
+                    if (lmntResponse.ok) {
+                        const lmntData = await lmntResponse.json();
+                        if (lmntData.success) {
+                            console.log('✅ Áudio gerado com LMNT:', lmntData.filename);
+                            playGeneratedAudio(lmntData.filename);
+                            return;
+                        }
+                    }
+                } catch (lmntError) {
+                    console.log('❌ LMNT falhou, tentando Web Speech API:', lmntError);
+                }
+                
+                // Fallback para Web Speech API
+                try {
+                    await generateAudioWithWebSpeech();
+                } catch (fallbackError) {
+                    console.error('❌ Todos os métodos falharam:', fallbackError);
+                    alert('Erro ao gerar áudio. Tente novamente.');
+                }
+                
+                // Configurar drag & drop
+                const dropZone = document.getElementById('miniDAWDropZone');
+                const fileInput = document.getElementById('miniDAWFileInput');
+                
+                if (dropZone && fileInput) {
+                    dropZone.addEventListener('click', () => fileInput.click());
                     dropZone.classList.add('dragover');
                 });
                 
