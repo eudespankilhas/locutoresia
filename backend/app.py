@@ -4,6 +4,9 @@ import sys
 import uuid
 from datetime import datetime
 
+# Importar agente de notícias
+from news_agent_simple import NewsAgentSimple as NewsAgent
+
 # No Vercel, as variáveis de ambiente são configuradas diretamente no painel
 # Não precisamos carregar de arquivo .env em produção
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'core'))
