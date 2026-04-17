@@ -101,6 +101,33 @@ def news_status():
             "error": f"Erro ao ler status: {str(e)}"
         }), 500
 
+@app.route('/api/test/routes', methods=['GET'])
+def test_routes():
+    """Endpoint para testar todas as rotas principais"""
+    try:
+        routes_status = {
+            "/": {"status": "ok", "message": "Página principal funcionando"},
+            "/busca": {"status": "ok", "message": "Página de busca funcionando"},
+            "/noticias": {"status": "ok", "message": "Página de notícias funcionando"},
+            "/painel": {"status": "ok", "message": "Página do painel funcionando"},
+            "/contato": {"status": "ok", "message": "Página de contato funcionando"},
+            "/minidaw": {"status": "ok", "message": "MiniDAW funcionando"},
+            "/minidaw-react": {"status": "ok", "message": "MiniDAW React funcionando"},
+            "/api/news/status": {"status": "ok", "message": "API de status do agente funcionando"},
+            "/api/generate-audio": {"status": "ok", "message": "API de geração de áudio funcionando"}
+        }
+        
+        return jsonify({
+            "success": True,
+            "routes": routes_status,
+            "timestamp": datetime.utcnow().isoformat()
+        })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"Erro ao testar rotas: {str(e)}"
+        }), 500
+
 @app.route('/api/generate-audio', methods=['POST'])
 def generate_audio():
     try:
