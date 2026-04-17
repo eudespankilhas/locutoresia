@@ -153,7 +153,7 @@ class NewsAgentSimple:
         }
         
         # Salvar log em arquivo (usar /tmp na Vercel)
-        log_dir = "/tmp" if os.environ.get('VERCEL') == '1' else "."
+        log_dir = "/tmp" if os.environ.get('VERCEL') else "."
         log_filename = f"news_log_simple_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         log_path = os.path.join(log_dir, log_filename)
         
