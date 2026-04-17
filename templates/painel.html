@@ -33,7 +33,7 @@
                         <a class="nav-link" href="/minidaw" target="_blank"><i class="fas fa-music me-1"></i>MiniDAW</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link active" href="/painel"><i class="fas fa-tachometer-alt me-1"></i>Painel</a>
+                        <a class="nav-link" href="/painel"><i class="fas fa-tachometer-alt me-1"></i>Painel</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="/contato"><i class="fas fa-envelope me-1"></i>Contato</a>
@@ -48,7 +48,7 @@
         <div class="row">
             <div class="col-12">
                 <h1><i class="fas fa-tachometer-alt me-2"></i>Painel de Controle</h1>
-                <p class="lead">Gerencie suas vozes, áudios e configurações</p>
+                <p class="lead">Gerencie suas vozes, áudios e notícias</p>
             </div>
         </div>
 
@@ -87,141 +87,6 @@
                         <h5 class="card-title"><i class="fas fa-star me-2"></i>Projetos</h5>
                         <h2>23</h2>
                         <small>Ativos: 8</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Ações Rápidas -->
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h5><i class="fas fa-bolt me-2"></i>Ações Rápidas</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-3 mb-3">
-                                <button class="btn btn-primary w-100" onclick="window.open('/', '_blank')">
-                                    <i class="fas fa-plus me-2"></i>Nova Voz
-                                </button>
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <button class="btn btn-success w-100" onclick="window.open('/minidaw', '_blank')">
-                                    <i class="fas fa-music me-2"></i>Abrir MiniDAW
-                                </button>
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <button class="btn btn-info w-100" onclick="window.open('https://app.lmnt.com/', '_blank')">
-                                    <i class="fas fa-microphone-alt me-2"></i>LMNT Studio
-                                </button>
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <button class="btn btn-warning w-100" onclick="exportData()">
-                                    <i class="fas fa-download me-2"></i>Exportar Dados
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Vozes Recentes -->
-        <div class="row mt-4">
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h5><i class="fas fa-microphone me-2"></i>Vozes Recentes</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="list-group">
-                            <div class="list-group-item d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="mb-1">Antonio - Profissional</h6>
-                                    <small class="text-muted">Criado há 2 dias</small>
-                                </div>
-                                <div>
-                                    <span class="badge bg-success">Ativo</span>
-                                    <button class="btn btn-sm btn-outline-primary ms-2">Editar</button>
-                                </div>
-                            </div>
-                            <div class="list-group-item d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="mb-1">Francisca - Amigável</h6>
-                                    <small class="text-muted">Criado há 5 dias</small>
-                                </div>
-                                <div>
-                                    <span class="badge bg-success">Ativo</span>
-                                    <button class="btn btn-sm btn-outline-primary ms-2">Editar</button>
-                                </div>
-                            </div>
-                            <div class="list-group-item d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="mb-1">Duarte - Lisboa</h6>
-                                    <small class="text-muted">Criado há 1 semana</small>
-                                </div>
-                                <div>
-                                    <span class="badge bg-warning">Em teste</span>
-                                    <button class="btn btn-sm btn-outline-primary ms-2">Editar</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Áudios Recentes -->
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h5><i class="fas fa-file-audio me-2"></i>Áudios Recentes</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="list-group">
-                            <div class="list-group-item d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="mb-1">Publicidade_V1.mp3</h6>
-                                    <small class="text-muted">2.3 MB - há 1 hora</small>
-                                </div>
-                                <div>
-                                    <button class="btn btn-sm btn-outline-success">
-                                        <i class="fas fa-play"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-primary ms-1">
-                                        <i class="fas fa-download"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="list-group-item d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="mb-1">Tutorial_Voz.wav</h6>
-                                    <small class="text-muted">1.8 MB - há 3 horas</small>
-                                </div>
-                                <div>
-                                    <button class="btn btn-sm btn-outline-success">
-                                        <i class="fas fa-play"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-primary ms-1">
-                                        <i class="fas fa-download"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="list-group-item d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="mb-1">Podcast_Intro.mp3</h6>
-                                    <small class="text-muted">3.1 MB - há 5 horas</small>
-                                </div>
-                                <div>
-                                    <button class="btn btn-sm btn-outline-success">
-                                        <i class="fas fa-play"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-primary ms-1">
-                                        <i class="fas fa-download"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -309,83 +174,33 @@
             </div>
         </div>
 
-        <!-- Configurações -->
+        <!-- Ações Rápidas -->
         <div class="row mt-4">
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
-                        <h5><i class="fas fa-cog me-2"></i>Configurações</h5>
+                        <h5><i class="fas fa-bolt me-2"></i>Ações Rápidas</h5>
                     </div>
                     <div class="card-body">
                         <div class="row">
-                            <div class="col-md-4">
-                                <h6>Configurações de Áudio</h6>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="autoSave" checked>
-                                    <label class="form-check-label" for="autoSave">
-                                        Salvar áudios automaticamente
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="highQuality" checked>
-                                    <label class="form-check-label" for="highQuality">
-                                        Alta qualidade de áudio
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="compressAudio">
-                                    <label class="form-check-label" for="compressAudio">
-                                        Comprimir áudios
-                                    </label>
-                                </div>
+                            <div class="col-md-3 mb-3">
+                                <button class="btn btn-primary w-100" onclick="window.open('/', '_blank')">
+                                    <i class="fas fa-plus me-2"></i>Nova Voz
+                                </button>
                             </div>
-                            <div class="col-md-4">
-                                <h6>Configurações de Voz</h6>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="autoEnhance" checked>
-                                    <label class="form-check-label" for="autoEnhance">
-                                        Melhorar voz automaticamente
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="noiseReduction" checked>
-                                    <label class="form-check-label" for="noiseReduction">
-                                        Redução de ruído
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="normalizeVolume">
-                                    <label class="form-check-label" for="normalizeVolume">
-                                        Normalizar volume
-                                    </label>
-                                </div>
+                            <div class="col-md-3 mb-3">
+                                <button class="btn btn-success w-100" onclick="window.open('/minidaw', '_blank')">
+                                    <i class="fas fa-music me-2"></i>Abrir MiniDAW
+                                </button>
                             </div>
-                            <div class="col-md-4">
-                                <h6>Notificações</h6>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="emailNotifications" checked>
-                                    <label class="form-check-label" for="emailNotifications">
-                                        Notificações por e-mail
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="browserNotifications">
-                                    <label class="form-check-label" for="browserNotifications">
-                                        Notificações do navegador
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="weeklyReport">
-                                    <label class="form-check-label" for="weeklyReport">
-                                        Relatório semanal
-                                    </label>
-                                </div>
+                            <div class="col-md-3 mb-3">
+                                <button class="btn btn-info w-100" onclick="window.open('https://app.lmnt.com/', '_blank')">
+                                    <i class="fas fa-microphone-alt me-2"></i>LMNT Studio
+                                </button>
                             </div>
-                        </div>
-                        <div class="row mt-3">
-                            <div class="col-12">
-                                <button class="btn btn-primary" onclick="saveSettings()">
-                                    <i class="fas fa-save me-2"></i>Salvar Configurações
+                            <div class="col-md-3 mb-3">
+                                <button class="btn btn-warning w-100" onclick="exportData()">
+                                    <i class="fas fa-download me-2"></i>Exportar Dados
                                 </button>
                             </div>
                         </div>
@@ -419,23 +234,6 @@
     <script>
         function exportData() {
             alert('Função de exportação de dados será implementada em breve!');
-        }
-
-        function saveSettings() {
-            const settings = {
-                autoSave: document.getElementById('autoSave').checked,
-                highQuality: document.getElementById('highQuality').checked,
-                compressAudio: document.getElementById('compressAudio').checked,
-                autoEnhance: document.getElementById('autoEnhance').checked,
-                noiseReduction: document.getElementById('noiseReduction').checked,
-                normalizeVolume: document.getElementById('normalizeVolume').checked,
-                emailNotifications: document.getElementById('emailNotifications').checked,
-                browserNotifications: document.getElementById('browserNotifications').checked,
-                weeklyReport: document.getElementById('weeklyReport').checked
-            };
-            
-            console.log('Salvando configurações:', settings);
-            alert('Configurações salvas com sucesso!');
         }
 
         // Funções do Agente de Notícias
