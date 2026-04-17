@@ -1,22 +1,27 @@
-"""
-Agente de Notícias Simplificado - NewPost-IA
-Versão simplificada para testes e debug
-"""
-
 import json
+import os
 import uuid
 import time
+import sys
+import logging
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple
-import logging
 
-# Configuração
+# Adicionar diretório raiz ao path para encontrar o módulo 'core'
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Carregar variáveis de ambiente
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
+# Configuração de Logs
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Configurações Supabase
-SUPABASE_URL = "https://vsaqnqurdfgzvrhbvvxw.supabase.co/rest/v1/posts"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZzYXFucXVyZGZnenZyaGJ2dnh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUwMTQ2MDMsImV4cCI6MjA2MDU5MDYwM30.ZtJqQ7WD7Y1nG5a99nBZbdHHBrqlOHE1q7jL9lCPnno"
+from core.news_utils import NewsUtils
 
 class NewsAgentSimple:
     """Agente simplificado para coleta de notícias"""
@@ -24,6 +29,7 @@ class NewsAgentSimple:
     def __init__(self):
         self.cycle_id = str(uuid.uuid4())
         self.start_time = datetime.utcnow()
+        self.news_utils = NewsUtils()
         self.stats = {
             "news_collected": 0,
             "news_validated": 0,
@@ -60,38 +66,22 @@ class NewsAgentSimple:
             mock_news = [
                 {
                     "title": "Banco Central mantém taxa Selic em 13.75%",
-                    "url": "https://example.com/news1",
+                    "url": "https://example.com/news11",
                     "source": "G1",
                     "source_domain": "g1.globo.com",
                     "published_at": datetime.utcnow().isoformat(),
-                    "summary": "Comitê de Política Monetária decidiu manter a taxa básica de juros em 13.75% ao ano.",
+                    "snippet": "Comitê de Política Monetária decidiu manter a taxa básica de juros em 13.75% ao ano.",
                     "category": "Economia",
-                    "author": "Redação",
-                    "content_snippet": "O Comitê de Política Monetária (Copom) decidiu nesta quarta-feira manter a taxa básica de juros (Selic) em 13.75% ao ano...",
                     "image_url": None
                 },
                 {
-                    "title": "Tesla anuncia nova fábrica no Brasil",
-                    "url": "https://example.com/news2",
+                    "title": "Tesla anuncia nova fábrica no Brasil em 2026",
+                    "url": "https://example.com/news22",
                     "source": "Exame",
                     "source_domain": "exame.com.br",
                     "published_at": datetime.utcnow().isoformat(),
-                    "summary": "Empresa de Elon Musk confirmou investimento de R$ 5 bilhões em nova unidade industrial.",
+                    "snippet": "Empresa de Elon Musk confirmou investimento de R$ 5 bilhões em nova unidade industrial.",
                     "category": "Tech",
-                    "author": "Redação",
-                    "content_snippet": "A Tesla confirmou oficialmente nesta quinta-feira a construção de sua nova fábrica no Brasil...",
-                    "image_url": None
-                },
-                {
-                    "title": "Governo lança novo programa de auxílio",
-                    "url": "https://example.com/news3",
-                    "source": "Folha de S.Paulo",
-                    "source_domain": "folha.uol.com.br",
-                    "published_at": datetime.utcnow().isoformat(),
-                    "summary": "Programa vai beneficiar mais de 10 milhões de famílias com renda de até R$ 600.",
-                    "category": "Brasil",
-                    "author": "Redação",
-                    "content_snippet": "O governo federal lançou nesta sexta-feira um novo programa de auxílio social...",
                     "image_url": None
                 }
             ]
@@ -106,146 +96,36 @@ class NewsAgentSimple:
             self.log_error(f"Erro na coleta mock: {str(e)}", "fetch")
             return []
     
-    def validate_news(self, news_data: Dict) -> Tuple[bool, List[str]]:
-        """Valida dados da notícia"""
-        errors = []
-        
-        if not news_data.get("title") or len(news_data.get("title", "")) < 10:
-            errors.append("Título ausente ou muito curto")
-        
-        if not news_data.get("url") or not news_data["url"].startswith("https://"):
-            errors.append("URL inválida")
-        
-        if not news_data.get("source"):
-            errors.append("Fonte não identificada")
-        
-        summary = news_data.get("summary", "")
-        if len(summary) < 50 or len(summary) > 200:
-            errors.append("Summary deve ter entre 50 e 200 caracteres")
-        
-        return len(errors) == 0, errors
-    
-    def process_news(self, news_data: Dict) -> Dict:
-        """Processa notícia (normalização, slug, tags, etc)"""
-        try:
-            # Gerar slug
-            import re
-            title = news_data["title"]
-            slug = title.lower()
-            slug = re.sub(r'[^a-z0-9]+', '-', slug)
-            slug = slug[:50] + f"-{int(time.time())}"
-            
-            # Gerar tags
-            tags = [news_data["category"].lower()]
-            if "selic" in title.lower():
-                tags.append("selic")
-            if "tesla" in title.lower():
-                tags.append("tesla")
-            if "auxílio" in title.lower():
-                tags.append("auxílio")
-            
-            # Análise de sentimento simples
-            title_lower = title.lower()
-            if any(word in title_lower for word in ["alta", "crescimento", "ganho", "lucro"]):
-                sentiment = "positivo"
-            elif any(word in title_lower for word in ["queda", "risco", "crise", "perda"]):
-                sentiment = "negativo"
-            else:
-                sentiment = "neutro"
-            
-            # Score de relevância
-            score = 7  # Base
-            
-            processed = {
-                **news_data,
-                "slug": slug,
-                "tags": tags[:5],
-                "sentiment": sentiment,
-                "sentiment_confidence": 0.7,
-                "relevance_score": score
-            }
-            
-            return processed
-            
-        except Exception as e:
-            self.log_error(f"Erro ao processar notícia: {str(e)}", "process")
-            return news_data
-    
-    def publish_to_supabase(self, news_data: Dict) -> Tuple[bool, Optional[str]]:
-        """Publica notícia no Supabase"""
-        try:
-            import requests
-            
-            payload = {
-                "title": news_data["title"][:150],
-                "content": news_data["summary"],
-                "url_source": news_data["url"],
-                "source": news_data["source"],
-                "category": news_data["category"],
-                "author": news_data["author"],
-                "published_at": news_data["published_at"],
-                "slug": news_data["slug"],
-                "tags": json.dumps(news_data["tags"]),
-                "sentiment": news_data["sentiment"],
-                "relevance_score": news_data["relevance_score"],
-                "status": "published",
-                "created_at": datetime.utcnow().isoformat()
-            }
-            
-            headers = {
-                "Authorization": f"Bearer {SUPABASE_KEY}",
-                "apikey": SUPABASE_KEY,
-                "Content-Type": "application/json",
-                "Prefer": "return=representation"
-            }
-            
-            response = requests.post(SUPABASE_URL, json=payload, headers=headers, timeout=30)
-            
-            if response.status_code == 201:
-                result = response.json()
-                post_id = result.get("id")
-                self.stats["news_published"] += 1
-                self.log_info(f"Notícia publicada: {news_data['title']} (ID: {post_id})")
-                return True, post_id
-            elif response.status_code == 409:
-                self.log_info(f"Notícia duplicada no Supabase: {news_data['title']}")
-                return False, None
-            else:
-                self.stats["supabase_errors"] += 1
-                self.log_error(f"Erro Supabase {response.status_code}: {response.text}", "supabase")
-                return False, None
-                
-        except Exception as e:
-            self.stats["supabase_errors"] += 1
-            self.log_error(f"Exceção ao publicar no Supabase: {str(e)}", "supabase")
-            return False, None
-    
     def run_cycle(self) -> Dict:
         """Executa ciclo completo de coleta e publicação"""
-        self.log_info("Iniciando ciclo simplificado de coleta de notícias")
+        self.log_info("Iniciando ciclo simplificado de coleta de notícias (NewsUtils)")
         
         # Coletar notícias mock
         all_news = self.collect_mock_news()
         
-        # Validar e processar
-        processed_news = []
+        # Validar, Normalizar e Publicar usando news_utils
         for news_data in all_news:
-            is_valid, validation_errors = self.validate_news(news_data)
-            
-            if is_valid:
-                processed_news_data = self.process_news(news_data)
-                processed_news.append(processed_news_data)
-                self.stats["news_validated"] += 1
-            else:
-                self.stats["validation_failed"] += 1
-                self.log_error(f"Validação falhou: {news_data['title']} - Erros: {validation_errors}", "validation")
-        
-        # Publicar notícias processadas
-        for news_data in processed_news:
-            success, supabase_id = self.publish_to_supabase(news_data)
-            if success:
-                news_data["supabase_published"] = True
-                news_data["supabase_id"] = supabase_id
+            try:
+                # 1. Normalizar
+                processed = self.news_utils.normalize_news(news_data)
+                
+                # 2. Verificar Duplicata
+                if self.news_utils.is_duplicate(processed["source_url"]):
+                    self.stats["duplicates_found"] += 1
+                    self.log_info(f"Duplicata pulada: {processed['title']}")
+                    continue
+                
+                # 3. Publicar (como Draft)
+                success, msg = self.news_utils.save_to_supabase(processed)
+                if success:
+                    self.stats["news_published"] += 1
+                else:
+                    self.stats["supabase_errors"] += 1
+                    self.log_error(f"Falha ao salvar no Supabase: {msg}")
+                    
+            except Exception as e:
+                self.log_error(f"Erro ao processar notícia simple: {e}")
+
         
         # Gerar log final
         end_time = datetime.utcnow()
@@ -272,8 +152,12 @@ class NewsAgentSimple:
             "MENSAGEM": f"Coletou {self.stats['news_collected']} notícias, publicou {self.stats['news_published']}"
         }
         
-        # Salvar log em arquivo
-        with open(f"news_log_simple_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json", "w", encoding='utf-8') as f:
+        # Salvar log em arquivo (usar /tmp na Vercel)
+        log_dir = "/tmp" if os.environ.get('VERCEL') == '1' else "."
+        log_filename = f"news_log_simple_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        log_path = os.path.join(log_dir, log_filename)
+        
+        with open(log_path, "w", encoding='utf-8') as f:
             json.dump(log_entry, f, ensure_ascii=False, indent=2)
         
         self.log_info(f"Ciclo simplificado finalizado. Status: {log_entry['status']}")

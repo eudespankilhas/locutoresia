@@ -4,21 +4,49 @@ import sys
 import uuid
 from datetime import datetime
 
-# Importar agente de notícias
-from news_agent_simple import NewsAgentSimple as NewsAgent
+# No Vercel, o diretório de execução principal pode não ser 'backend'
+# Precisamos adicionar o diretório atual (onde está app.py) ao sys.path explicitamente
+sys.path.insert(0, os.path.dirname(__file__))
 
-# No Vercel, as variáveis de ambiente são configuradas diretamente no painel
+# As variáveis de ambiente são configuradas diretamente no painel
 # Não precisamos carregar de arquivo .env em produção
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'core'))
 
+# Criar app Flask primeiro
+base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 app = Flask(__name__, 
-           template_folder='../templates',
-           static_folder='../static')
+           template_folder=os.path.join(base_dir, 'templates'),
+           static_folder=os.path.join(base_dir, 'static'))
 
-app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), '..', 'generated_audio')
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+# Configurações de upload - usar /tmp no Vercel
+if os.environ.get('VERCEL'):
+    app.config['UPLOAD_FOLDER'] = '/tmp/generated_audio'
+    app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB
+else:
+    app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), '..', 'generated_audio')
+    app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+# Importar agente de notícias de forma segura
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+try:
+    from backend.news_agent_simple import NewsAgentSimple as NewsAgent
+    HAS_NEWS_AGENT = True
+except ImportError:
+    try:
+        from news_agent_simple import NewsAgentSimple as NewsAgent
+        HAS_NEWS_AGENT = True
+    except ImportError as e:
+        print(f"Aviso: Não foi possível importar news_agent_simple: {e}")
+        HAS_NEWS_AGENT = False
+    
+    class NewsAgent:
+        def run_cycle(self):
+            return {"success": False, "message": "Agente de notícias indisponível."}
+except Exception as e:
+    print(f"NewsAgent não disponível: {e}")
+    NewsAgent = None
 
 @app.route('/')
 def index():
@@ -57,6 +85,12 @@ def contato():
 @app.route('/api/news/collect', methods=['POST'])
 def collect_news():
     """Endpoint para iniciar coleta de notícias"""
+    if NewsAgent is None:
+        return jsonify({
+            "success": False,
+            "error": "NewsAgent não disponível no ambiente Vercel"
+        }), 503
+    
     try:
         agent = NewsAgent()
         result = agent.run_cycle()
@@ -75,11 +109,10 @@ def news_status():
     """Endpoint para verificar status do agente"""
     try:
         # Ler último log
-        import os
-        import glob
-        import json
+        # Procurar logs em ambos diretórios possíveis
+        log_dir = "/tmp" if os.environ.get('VERCEL') else "."
+        log_files = glob.glob(os.path.join(log_dir, "news_log_*.json"))
         
-        log_files = glob.glob("news_log_*.json")
         if log_files:
             latest_log = max(log_files, key=os.path.getctime)
             with open(latest_log, 'r', encoding='utf-8') as f:
@@ -100,6 +133,43 @@ def news_status():
             "success": False,
             "error": f"Erro ao ler status: {str(e)}"
         }), 500
+
+@app.route('/api/curadoria/noticias', methods=['GET'])
+def get_pending_news():
+    import requests
+    supabase_url = os.getenv("SUPABASE_URL", "").rstrip('/')
+    if not supabase_url.endswith("/rest/v1/posts"):
+        supabase_url = f"{supabase_url}/rest/v1/posts"
+    supabase_key = os.getenv("SUPABASE_ANON_KEY", "")
+    
+    headers = {"apikey": supabase_key, "Authorization": f"Bearer {supabase_key}"}
+    try:
+        # Mudança do status de 'pending' para 'draft' conforme o banco aceita
+        response = requests.get(f"{supabase_url}?status=eq.draft&order=created_at.desc", headers=headers)
+        if response.status_code == 200:
+            return jsonify({"success": True, "data": response.json()})
+        return jsonify({"success": False, "error": response.text}), 500
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/api/curadoria/noticias/<post_id>', methods=['PATCH'])
+def update_curated_news(post_id):
+    import requests
+    data = request.get_json()
+    supabase_url = os.getenv("SUPABASE_URL", "").rstrip('/')
+    if not supabase_url.endswith("/rest/v1/posts"):
+        supabase_url = f"{supabase_url}/rest/v1/posts"
+    supabase_key = os.getenv("SUPABASE_ANON_KEY", "")
+    
+    headers = {"apikey": supabase_key, "Authorization": f"Bearer {supabase_key}", "Content-Type": "application/json"}
+    try:
+        response = requests.patch(f"{supabase_url}?id=eq.{post_id}", headers=headers, json=data)
+        if response.status_code in (200, 204):
+            return jsonify({"success": True})
+        return jsonify({"success": False, "error": response.text}), response.status_code
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
 
 @app.route('/api/test/routes', methods=['GET'])
 def test_routes():
@@ -127,6 +197,73 @@ def test_routes():
             "success": False,
             "error": f"Erro ao testar rotas: {str(e)}"
         }), 500
+
+@app.route('/api/generate-image', methods=['POST'])
+def generate_image_route():
+    """Gera imagem com fallback Replicate -> Stable Horde"""
+    try:
+        data = request.get_json()
+        prompt = data.get('prompt')
+        if not prompt:
+            return jsonify({"success": False, "error": "Prompt não fornecido"}), 400
+        
+        from core.image_generator import ImageGenerator
+        gen = ImageGenerator()
+        image_url = gen.generate_image(prompt)
+        
+        return jsonify({
+            "success": True,
+            "image_url": image_url
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/api/voice-agent', methods=['POST'])
+def voice_agent_analysis():
+    """Análise de conteúdo para o Agente de Voz via Gemini"""
+    try:
+        data = request.get_json()
+        content = data.get('content')
+        if not content:
+            return jsonify({"success": False, "error": "Conteúdo não fornecido"}), 400
+        
+        # Usar Gemini para análise
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            return jsonify({"success": False, "error": "Gemini API Key não configurada"}), 500
+            
+        import google.generativeai as genai
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        
+        prompt = f"""
+        Analise o seguinte conteúdo de notícia e retorne um JSON estruturado com:
+        1. 'summary': Um resumo viral de 2 frases.
+        2. 'insights': 3 pontos chaves ou curiosidades.
+        3. 'emotional_tone': O tom ideal para o locutor (ex: entusiasmado, sério, sarcástico).
+        4. 'hashtags': 5 hashtags relevantes.
+        
+        Conteúdo: {content}
+        """
+        
+        response = model.generate_content(prompt)
+        # Extrair JSON da resposta do Gemini
+        text_response = response.text
+        # Limpar possíveis markdown blocks
+        json_str = text_response.replace('```json', '').replace('```', '').strip()
+        
+        try:
+            val = json.loads(json_str)
+        except:
+            # Fallback se não vier JSON puro
+            val = {"summary": text_response[:200], "insights": ["Análise concluída"], "emotional_tone": "informativo", "hashtags": ["#news"]}
+
+        return jsonify({
+            "success": True,
+            "analysis": val
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/api/generate-audio', methods=['POST'])
 def generate_audio():
@@ -208,7 +345,10 @@ def synthesize_cloned_voice():
         if len(text) > 5000:
             return jsonify({'error': 'Texto muito longo (máximo 5000 caracteres)'}), 400
         try:
-            from elevenlabs_voice_cloner import ElevenLabsVoiceCloner
+            try:
+                from core.elevenlabs_voice_cloner import ElevenLabsVoiceCloner
+            except ImportError:
+                from elevenlabs_voice_cloner import ElevenLabsVoiceCloner
             cloner = ElevenLabsVoiceCloner()
             audio_data = cloner.synthesize_with_cloned_voice(voice_id, text)
         except ImportError:
@@ -224,7 +364,10 @@ def synthesize_cloned_voice():
 @app.route('/api/list-elevenlabs-voices', methods=['GET'])
 def list_elevenlabs_voices():
     try:
-        from elevenlabs_voice_cloner import ElevenLabsVoiceCloner
+        try:
+            from core.elevenlabs_voice_cloner import ElevenLabsVoiceCloner
+        except ImportError:
+            from elevenlabs_voice_cloner import ElevenLabsVoiceCloner
         cloner = ElevenLabsVoiceCloner()
         voices_data = cloner.list_voices()
         voices = voices_data.get('voices', [])
@@ -524,10 +667,19 @@ def voxcraft_logs():
 
 
 # Importar handlers de upload
-from upload_handler import handle_upload, handle_voice_upload
+try:
+    from backend.upload_handler import handle_upload, handle_voice_upload
+except ImportError:
+    from upload_handler import handle_upload, handle_voice_upload
 
-# Importar integração LMNT
-from lmnt_integration import lmnt_integration
+# Importar integração LMNT (usar versão segura para Vercel)
+if os.environ.get('VERCEL'):
+    from core.lmnt_voice_cloner_vercel import lmnt_integration
+else:
+    try:
+        from backend.lmnt_integration import lmnt_integration
+    except ImportError:
+        from lmnt_integration import lmnt_integration
 
 # Endpoints LMNT Integration
 @app.route('/api/lmnt/status', methods=['GET'])

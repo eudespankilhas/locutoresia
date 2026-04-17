@@ -53,34 +53,19 @@
         </div>
 
         <div class="row mt-4">
-            <div class="col-md-8">
-                <!-- Notícias em destaque -->
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <h5 class="card-title">Nova atualização do sistema de vozes IA</h5>
-                        <p class="text-muted">Publicado em 15 de abril de 2026</p>
-                        <p class="card-text">Implementamos 15 novos estilos de fala para tornar suas locuções ainda mais profissionais e personalizadas...</p>
-                        <a href="#" class="btn btn-primary">Leia mais</a>
+            <div class="col-md-8" id="news-container">
+                <div class="text-center py-5" id="news-loading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Carregando...</span>
                     </div>
+                    <p class="mt-2 text-muted">Buscando notícias pendentes de curadoria...</p>
                 </div>
-
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <h5 class="card-title">Integração com LMNT Studio agora disponível</h5>
-                        <p class="text-muted">Publicado em 14 de abril de 2026</p>
-                        <p class="card-text">Agora você pode acessar diretamente o LMNT Studio através do nosso menu principal...</p>
-                        <a href="#" class="btn btn-primary">Leia mais</a>
-                    </div>
+                
+                <div id="no-news-message" class="alert alert-info d-none">
+                    <i class="fas fa-check-circle me-2"></i>Não há notícias pendentes para curadoria no momento!
                 </div>
-
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <h5 class="card-title">MiniDAW 2.0 - Novas funcionalidades</h5>
-                        <p class="text-muted">Publicado em 13 de abril de 2026</p>
-                        <p class="card-text">Nossa MiniDAW agora suporta mais faixas, efeitos avançados e exportação em múltiplos formatos...</p>
-                        <a href="#" class="btn btn-primary">Leia mais</a>
-                    </div>
-                </div>
+                
+                <div id="news-list"></div>
             </div>
 
             <div class="col-md-4">
@@ -137,5 +122,278 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Modal Editar Notícia -->
+    <div class="modal fade" id="editNewsModal" tabindex="-1" aria-labelledby="editNewsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editNewsModalLabel">Curadoria de Notícia</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="edit-post-id">
+                    <div class="mb-3">
+                        <label for="edit-title" class="form-label">Título</label>
+                        <input type="text" class="form-control" id="edit-title">
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-content" class="form-label">Conteúdo (Resumo)</label>
+                        <textarea class="form-control" id="edit-content" rows="4"></textarea>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <button type="button" class="btn btn-outline-primary w-100" id="btn-ia-analyze">
+                                <i class="fas fa-robot me-1"></i>Análise IA (Gemini)
+                            </button>
+                        </div>
+                        <div class="col-md-6">
+                            <button type="button" class="btn btn-outline-info w-100" id="btn-ia-image">
+                                <i class="fas fa-image me-1"></i>Gerar Imagem IA
+                            </button>
+                        </div>
+                    </div>
+                    <div id="ia-preview-container" class="d-none border rounded p-3 bg-light mb-3">
+                        <div class="d-flex justify-content-between">
+                            <h6 class="text-primary"><i class="fas fa-magic me-1"></i>Sugestão da IA:</h6>
+                            <button class="btn btn-sm btn-link p-0" onclick="applyIAResponsed()">Aplicar Sugestão</button>
+                        </div>
+                        <div id="ia-preview-content" class="small"></div>
+                    </div>
+                    <div id="image-preview-container" class="d-none text-center mb-3">
+                        <img id="preview-image-src" src="" class="img-fluid rounded shadow-sm border" style="max-height: 200px;">
+                        <input type="hidden" id="edit-image-url">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success" id="btn-save-publish">Aprovar e Publicar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script de Curadoria -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchPendingNews();
+            document.getElementById('btn-ia-analyze').addEventListener('click', analyzeWithIA);
+            document.getElementById('btn-ia-image').addEventListener('click', generateIAImage);
+            document.getElementById('btn-save-publish').addEventListener('click', saveAndPublish);
+        });
+
+        const editModal = new bootstrap.Modal(document.getElementById('editNewsModal'));
+        let currentPosts = [];
+        let lastIAResponse = null;
+
+        function fetchPendingNews() {
+            fetch('/api/curadoria/noticias')
+                .then(res => res.json())
+                .then(response => {
+                    document.getElementById('news-loading').classList.add('d-none');
+                    if(response.success && response.data.length > 0) {
+                        currentPosts = response.data;
+                        renderNews(response.data);
+                        document.getElementById('no-news-message').classList.add('d-none');
+                    } else {
+                        document.getElementById('news-list').innerHTML = '';
+                        document.getElementById('no-news-message').classList.remove('d-none');
+                    }
+                })
+                .catch(err => {
+                    document.getElementById('news-loading').classList.add('d-none');
+                    alert('Erro ao carregar rascunhos!');
+                    console.error(err);
+                });
+        }
+
+        function renderNews(posts) {
+            const list = document.getElementById('news-list');
+            list.innerHTML = '';
+            
+            posts.forEach(post => {
+                const dateHtml = new Date(post.created_at).toLocaleDateString('pt-BR');
+                const card = document.createElement('div');
+                card.className = 'card mb-4 border-warning shadow-sm';
+                card.innerHTML = `
+                    <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                        <span class="badge bg-dark">RASCUNHO PENDENTE</span>
+                        <small>Fonte: ${post.metadata?.source || 'Desconhecida'}</small>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">${post.title}</h5>
+                        <p class="text-muted mb-2"><small>Adicionado em ${dateHtml} | Categoria: ${post.category}</small></p>
+                        <p class="card-text">${post.content}</p>
+                        <div class="d-flex gap-2 mt-3">
+                            <button class="btn btn-primary" onclick="openEditModal('${post.id}')">
+                                <i class="fas fa-edit me-1"></i>Revisar / Editar
+                            </button>
+                            <button class="btn btn-success" onclick="quickPublish('${post.id}')">
+                                <i class="fas fa-check me-1"></i>Aprovar (Direto)
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="rejectPost('${post.id}')">
+                                <i class="fas fa-trash me-1"></i>Descartar
+                            </button>
+                        </div>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        function openEditModal(postId) {
+            const post = currentPosts.find(p => p.id === postId);
+            if (!post) return;
+            
+            document.getElementById('edit-post-id').value = post.id;
+            document.getElementById('edit-title').value = post.title;
+            document.getElementById('edit-content').value = post.content;
+            
+            // Reset previews
+            document.getElementById('ia-preview-container').classList.add('d-none');
+            document.getElementById('image-preview-container').classList.add('d-none');
+            document.getElementById('edit-image-url').value = post.image_url || '';
+            
+            if (post.image_url) {
+                document.getElementById('preview-image-src').src = post.image_url;
+                document.getElementById('image-preview-container').classList.remove('d-none');
+            }
+            
+            editModal.show();
+        }
+
+        function analyzeWithIA() {
+            const content = document.getElementById('edit-content').value;
+            const btn = document.getElementById('btn-ia-analyze');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Analisando...';
+
+            fetch('/api/voice-agent', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: content })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    lastIAResponse = data.analysis;
+                    const container = document.getElementById('ia-preview-container');
+                    const contentDiv = document.getElementById('ia-preview-content');
+                    container.classList.remove('d-none');
+                    contentDiv.innerHTML = `
+                        <strong>Resumo:</strong> ${data.analysis.summary}<br>
+                        <strong>Sentimento:</strong> ${data.analysis.emotional_tone}<br>
+                        <strong>Tags:</strong> ${data.analysis.hashtags.join(', ')}
+                    `;
+                }
+            })
+            .catch(e => alert('Erro na análise IA'))
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-robot me-1"></i>Análise IA (Gemini)';
+            });
+        }
+
+        function applyIAResponsed() {
+            if (!lastIAResponse) return;
+            document.getElementById('edit-content').value = lastIAResponse.summary;
+        }
+
+        function generateIAImage() {
+            const title = document.getElementById('edit-title').value;
+            const btn = document.getElementById('btn-ia-image');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Gerando...';
+
+            fetch('/api/generate-image', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: title + ", realistic style, cinematic lighting" })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('edit-image-url').value = data.image_url;
+                    document.getElementById('preview-image-src').src = data.image_url;
+                    document.getElementById('image-preview-container').classList.remove('d-none');
+                }
+            })
+            .catch(e => alert('Erro ao gerar imagem'))
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-image me-1"></i>Gerar Imagem IA';
+            });
+        }
+
+            const id = document.getElementById('edit-post-id').value;
+            const title = document.getElementById('edit-title').value;
+            const content = document.getElementById('edit-content').value;
+            const imageUrl = document.getElementById('edit-image-url').value;
+            
+            const btn = document.getElementById('btn-save-publish');
+            btn.disabled = true;
+            btn.innerText = 'Salvando...';
+
+            fetch('/api/curadoria/noticias/' + id, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title: title,
+                    content: content,
+                    image_url: imageUrl,
+                    status: 'ready'
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    editModal.hide();
+                    removePostFromList(id);
+                } else {
+                    alert('Erro ao aprovar post: ' + data.error);
+                }
+            })
+            .catch(e => alert(e))
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerText = 'Aprovar e Publicar';
+            });
+        }
+
+        function quickPublish(id) {
+            if(!confirm('Deseja publicar esta notícia sem revisá-la?')) return;
+            
+            fetch('/api/curadoria/noticias/' + id, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'ready' })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) removePostFromList(id);
+                else alert('Erro: ' + data.error);
+            });
+        }
+
+        function rejectPost(id) {
+            if(!confirm('Tem certeza que deseja excluir/descartar esta notícia permanentemente?')) return;
+            
+            fetch('/api/curadoria/noticias/' + id, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'archived' })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) removePostFromList(id);
+                else alert('Erro: ' + data.error);
+            });
+        }
+
+        function removePostFromList(id) {
+            currentPosts = currentPosts.filter(p => p.id !== id);
+            fetchPendingNews(); // reload to show empty state if needed
+        }
+    </script>
 </body>
 </html>

@@ -43,6 +43,7 @@ generated_audio/*.mp3
 
 # Logs
 *.log
+news_log_*.json
 
 # Cache
 .cache/
@@ -62,3 +63,6 @@ ehthumbs.db
 Desktop.ini
 
 .vercel
+
+.vercel
+.env*.local

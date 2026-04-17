@@ -22,6 +22,13 @@ GOOGLE_AI_STUDIO_API_KEY=sua_chave_google_ai_studio_aqui
 ELEVENLABS_API_KEY=sua_chave_elevenlabs_aqui
 ```
 
+### 5. Supabase (OBRIGATÓRIO para publicação de notícias)
+```
+SUPABASE_URL=https://ykswhzqdjoshjoaruhqs.supabase.co
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlrc3doenFkam9zaGpvYXJ1aHFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2MTA4MjYsImV4cCI6MjA4NzE4NjgyNn0.yzezm6VZ5U_O7Txaj8B4_TD0PFVSpjZspYcZ1CYD0jo
+SUPABASE_SERVICE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlrc3doenFkam9zaGpvYXJ1aHFzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTYxMDgyNiwiZXhwIjoyMDg3MTg2ODI2fQ.jnVoRruRPlMpcskHU0ofEdH5hEY8_5tvT89HT6lKWK8
+```
+
 ## Como Configurar na Vercel
 
 ### Passo 1: Acessar Dashboard
@@ -53,6 +60,24 @@ ELEVENLABS_API_KEY=sua_chave_elevenlabs_aqui
 - **Environment**: Production, Preview, Development
 - Clique em "Save"
 
+#### Variável 4: SUPABASE_URL
+- **Name**: `SUPABASE_URL`
+- **Value**: `https://ykswhzqdjoshjoaruhqs.supabase.co`
+- **Environment**: Production, Preview, Development
+- Clique em "Save"
+
+#### Variável 5: SUPABASE_ANON_KEY
+- **Name**: `SUPABASE_ANON_KEY`
+- **Value**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlrc3doenFkam9zaGpvYXJ1aHFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2MTA4MjYsImV4cCI6MjA4NzE4NjgyNn0.yzezm6VZ5U_O7Txaj8B4_TD0PFVSpjZspYcZ1CYD0jo`
+- **Environment**: Production, Preview, Development
+- Clique em "Save"
+
+#### Variável 6: SUPABASE_SERVICE_KEY (Opcional)
+- **Name**: `SUPABASE_SERVICE_KEY`
+- **Value**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlrc3doenFkam9zaGpvYXJ1aHFzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTYxMDgyNiwiZXhwIjoyMDg3MTg2ODI2fQ.jnVoRruRPlMpcskHU0ofEdH5hEY8_5tvT89HT6lKWK8`
+- **Environment**: Production, Preview, Development
+- Clique em "Save"
+
 ### Passo 4: Redeploy Automático
 Após salvar as variáveis, o Vercel fará redeploy automático.
 
@@ -77,6 +102,12 @@ Após salvar as variáveis, o Vercel fará redeploy automático.
 - URL: https://elevenlabs.io/app/settings/api-keys
 - Criar conta e gerar API Key
 - Copiar a chave
+
+### Supabase (Projeto já criado)
+- URL: https://supabase.com/dashboard
+- Projeto: `ykswhzqdjoshjoaruhqs`
+- URL do projeto: `https://ykswhzqdjoshjoaruhqs.supabase.co`
+- As chaves já estão configuradas no projeto
 
 ## Teste Após Configuração
 
@@ -114,11 +145,14 @@ curl https://locutores-ia.vercel.app/
 LMNT_API_KEY=ak_AbZv3CzqvsHjHxRFj4oL9h
 GEMINI_API_KEY=sua_chave_gemini_aqui
 GOOGLE_AI_STUDIO_API_KEY=sua_chave_google_ai_studio_aqui
+SUPABASE_URL=https://ykswhzqdjoshjoaruhqs.supabase.co
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlrc3doenFkam9zaGpvYXJ1aHFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2MTA4MjYsImV4cCI6MjA4NzE4NjgyNn0.yzezm6VZ5U_O7Txaj8B4_TD0PFVSpjZspYcZ1CYD0jo
 ```
 
 **OPCIONAL:**
 ```
 ELEVENLABS_API_KEY=sua_chave_elevenlabs_aqui
+SUPABASE_SERVICE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlrc3doenFkam9zaGpvYXJ1aHFzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTYxMDgyNiwiZXhwIjoyMDg3MTg2ODI2fQ.jnVoRruRPlMpcskHU0ofEdH5hEY8_5tvT89HT6lKWK8
 ```
 
 Configure no dashboard Vercel e aguarde o redeploy automático!
