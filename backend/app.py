@@ -2,6 +2,8 @@ from flask import Flask, render_template, request, jsonify, send_file
 import os
 import sys
 import uuid
+import glob
+import json
 from datetime import datetime
 
 # No Vercel, o diretório de execução principal pode não ser 'backend'

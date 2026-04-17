@@ -65,23 +65,23 @@ class NewsAgentSimple:
             
             mock_news = [
                 {
-                    "title": "Banco Central mantém taxa Selic em 13.75%",
-                    "url": "https://example.com/news11",
-                    "source": "G1",
-                    "source_domain": "g1.globo.com",
+                    "title": "Flamengo assume liderança isolada do Brasileirão 2026",
+                    "url": "https://ge.globo.com/futebol/times/flamengo/noticia/2026/04/17/flamengo-lider-brasileirao.ghtml",
+                    "source": "GE",
+                    "source_domain": "ge.globo.com",
                     "published_at": datetime.utcnow().isoformat(),
-                    "snippet": "Comitê de Política Monetária decidiu manter a taxa básica de juros em 13.75% ao ano.",
-                    "category": "Economia",
+                    "snippet": "Com vitória expressiva no Maracanã, o Rubro-Negro consolida sua posição no topo da tabela e abre vantagem sobre rivais.",
+                    "category": "Esportes",
                     "image_url": None
                 },
                 {
-                    "title": "Tesla anuncia nova fábrica no Brasil em 2026",
-                    "url": "https://example.com/news22",
-                    "source": "Exame",
-                    "source_domain": "exame.com.br",
+                    "title": "Mercado da Bola: Flamengo monitora reforços para o Mundial de Clubes",
+                    "url": "https://colunadofla.com/2026/04/flamengo-mercado-bola-reforcos/",
+                    "source": "Coluna do Fla",
+                    "source_domain": "colunadofla.com",
                     "published_at": datetime.utcnow().isoformat(),
-                    "snippet": "Empresa de Elon Musk confirmou investimento de R$ 5 bilhões em nova unidade industrial.",
-                    "category": "Tech",
+                    "snippet": "Diretoria rubro-negra busca nomes de peso na Europa para fortalecer o elenco visando as competições internacionais de 2026.",
+                    "category": "Esportes",
                     "image_url": None
                 }
             ]
