@@ -51,6 +51,53 @@ def contato():
     """Página de Contato"""
     return render_template('contato.html')
 
+@app.route('/api/news/collect', methods=['POST'])
+def collect_news():
+    """Endpoint para iniciar coleta de notícias"""
+    try:
+        agent = NewsAgent()
+        result = agent.run_cycle()
+        return jsonify({
+            "success": True,
+            "result": result
+        })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"Erro na coleta: {str(e)}"
+        }), 500
+
+@app.route('/api/news/status', methods=['GET'])
+def news_status():
+    """Endpoint para verificar status do agente"""
+    try:
+        # Ler último log
+        import os
+        import glob
+        import json
+        
+        log_files = glob.glob("news_log_*.json")
+        if log_files:
+            latest_log = max(log_files, key=os.path.getctime)
+            with open(latest_log, 'r', encoding='utf-8') as f:
+                log_data = json.load(f)
+                return jsonify({
+                    "success": True,
+                    "data": log_data
+                })
+        else:
+            return jsonify({
+                "success": True,
+                "data": {
+                    "message": "Nenhum ciclo executado ainda"
+                }
+            })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"Erro ao ler status: {str(e)}"
+        }), 500
+
 @app.route('/api/generate-audio', methods=['POST'])
 def generate_audio():
     try:
