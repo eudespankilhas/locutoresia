@@ -81,14 +81,45 @@ vercel --prod
 
 ### 5. Configurar Variáveis de Ambiente no Vercel
 
-Após o deploy, configure a API Key:
+Após o deploy, configure todas as variáveis de ambiente necessárias:
 
 1. No Dashboard do Vercel, selecione o projeto
 2. Vá em **Settings** > **Environment Variables**
-3. Adicione:
-   - **Name**: `GEMINI_API_KEY`
-   - **Value**: `sua_chave_api_google_gemini`
-4. Clique em **Save**
+3. Adicione as seguintes variáveis:
+
+#### Google Gemini
+- **Name**: `GEMINI_API_KEY`
+- **Value**: `sua_chave_api_google_gemini`
+
+#### ElevenLabs
+- **Name**: `ELEVENLABS_API_KEY`
+- **Value**: `sua_chave_api_elevenlabs`
+
+#### Google AI Studio
+- **Name**: `GOOGLE_AI_STUDIO_API_KEY`
+- **Value**: `sua_chave_api_google_ai_studio`
+
+#### LMNT
+- **Name**: `LMNT_API_KEY`
+- **Value**: `sua_chave_api_lmnt`
+
+#### Supabase (CRUCIAL para Dashboards com dados reais)
+- **Name**: `SUPABASE_URL`
+- **Value**: `https://ykswhzqdjoshjoaruhqs.supabase.co`
+- **Name**: `SUPABASE_ANON_KEY`
+- **Value**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlrc3doenFkam9zaGpvYXJ1aHFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2MTA4MjYsImV4cCI6MjA4NzE4NjgyNn0.yzezm6VZ5U_O7Txaj8B4_TD0PFVSpjZspYcZ1CYD0jo`
+- **Name**: `SUPABASE_SERVICE_KEY`
+- **Value**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlrc3doenFkam9zaGpvYXJ1aHFzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTYxMDgyNiwiZXhwIjoyMDg3MTg2ODI2fQ.jnVoRruRPlMpcskHU0ofEdH5hEY8_5tvT89HT6lKWK8`
+
+#### NewPost-IA
+- **Name**: `NEWPOST_IA_URL`
+- **Value**: `https://plugpost-ai.lovable.app`
+- **Name**: `NEWPOST_SUPABASE_URL`
+- **Value**: `https://ykswhzqdjoshjoaruhqs.supabase.co`
+- **Name**: `NEWPOST_SUPABASE_ANON_KEY`
+- **Value**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlrc3doenFkam9zaGpvYXJ1aHFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2MTA4MjYsImV4cCI6MjA4NzE4NjgyNn0.yzezm6VZ5U_O7Txaj8B4_TD0PFVSpjZspYcZ1CYD0jo`
+
+4. Clique em **Save** para cada variável
 5. Faça **Redeploy** para aplicar as mudanças
 
 ### 6. Testar a Aplicação
@@ -97,6 +128,11 @@ Após o deploy, configure a API Key:
 2. Teste a geração de áudio
 3. Verifique a MiniDAW
 4. Confirme o download de áudios
+5. **Teste os Dashboards com dados reais:**
+   - `/dashboard-real` - Dashboard com dados do NewPost-IA
+   - `/dashboard-advanced` - Dashboard Avançado
+   - `/dashboard-profissional` - Dashboard Profissional
+6. Verifique se os dashboards mostram dados reais da tabela `newpost_posts`
 
 ## 🛠️ Solução de Problemas
 

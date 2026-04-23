@@ -5,22 +5,14 @@
       "src": "backend/app.py",
       "use": "@vercel/python",
       "config": {
-        "maxDuration": 30
+        "maxDuration": 60
       }
     }
   ],
   "rewrites": [
     {
-      "source": "/static/(.*)",
-      "destination": "/static/$1"
-    },
-    {
-      "source": "/api/(.*)",
-      "destination": "backend/app.py"
-    },
-    {
       "source": "/(.*)",
-      "destination": "backend/app.py"
+      "destination": "/backend/app.py"
     }
   ],
   "env": {

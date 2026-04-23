@@ -1,0 +1,82 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+news_scheduler.log
+news_agent.log
+
+# Environment files (configurados na Vercel)
+.env
+.env.local
+.env.*.local
+
+# Test files
+test_*.py
+*_test.py
+check_*.py
+setup_*.py
+list_*.py
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Node modules (se houver frontend)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Build artifacts
+.vercel/
+.vercelignore
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+README_NEWSAGENT.md
+README*.md
+
+# Cache
+.cache/
+.pytest_cache/
+
+# Minidaw React (se for projeto separado)
+minidaw-react/
