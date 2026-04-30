@@ -14,31 +14,173 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 from urllib.parse import urlparse
 
+# Carregar variáveis de ambiente
+try:
+    from dotenv import load_dotenv
+    load_dotenv('.env.local')
+except ImportError:
+    pass
+
 # Configuração de Logs
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 class NewsUtils:
     def __init__(self):
-        self.supabase_url = os.getenv("SUPABASE_URL", "").strip()
+        self.supabase_url = os.getenv("SUPABASE_URL", "https://ravpbfkicqkwjxejuzty.supabase.co").strip()
         if self.supabase_url and not self.supabase_url.endswith("/rest/v1/posts"):
             self.supabase_url = f"{self.supabase_url.rstrip('/')}/rest/v1/posts"
         
-        self.supabase_key = os.getenv("SUPABASE_ANON_KEY", "").strip()
+        # Tentar diferentes variáveis de ambiente
+        self.supabase_key = os.getenv("SUPABASE_SERVICE_KEY", "").strip()
+        if not self.supabase_key:
+            self.supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+        if not self.supabase_key:
+            self.supabase_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhdnBiZmtpY3Frd2p4ZWp1enR5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzMxNDMwOCwiZXhwIjoyMDkyODkwMzA4fQ.QAHywO5Uu70dmcMQM7t7EslEqZG4y79-kLUIxPR81RM"
+        
+        print(f"Supabase URL: {self.supabase_url}")
+        print(f"Supabase Key configurada: {'Sim' if self.supabase_key else 'Não'}")
         
     def fetch_web_search(self, query: str, max_results: int = 5) -> List[Dict]:
         """
-        Simula busca web. Em produção, integrar com NewsAPI ou similar.
+        Busca notícias reais usando web scraping e RSS feeds
         """
-        logger.info(f"Buscando notícias para: {query}")
-        # Simulando resultados para manter o fluxo funcional
+        logger.info(f"Buscando notícias reais para: {query}")
         results = []
-        for i in range(max_results):
+        
+        try:
+            # Tentar diferentes estratégias de busca
+            results.extend(self._fetch_from_rss_feeds(query, max_results))
+            
+            # Se não encontrar suficiente, tentar web scraping direto
+            if len(results) < max_results:
+                results.extend(self._scrape_news_sites(query, max_results - len(results)))
+            
+            # Limitar resultados
+            results = results[:max_results]
+            
+            logger.info(f"Encontradas {len(results)} notícias para: {query}")
+            return results
+            
+        except Exception as e:
+            logger.error(f"Erro ao buscar notícias: {e}")
+            # Retornar resultados mock em caso de falha
+            return self._fallback_results(query, max_results)
+    
+    def _fetch_from_rss_feeds(self, query: str, max_results: int) -> List[Dict]:
+        """Busca notícias de feeds RSS"""
+        import feedparser
+        
+        # RSS feeds das principais fontes brasileiras
+        rss_feeds = {
+            "exame": "https://exame.com/feed/",
+            "veja": "https://veja.abril.com.br/feed/",
+            "folha": "https://feeds.folha.uol.com.br/emcimadahora/rss091.xml",
+            "diario_nordeste": "https://diariodonordeste.verdesmares.com.br/rss/ultimas-noticias"
+        }
+        
+        results = []
+        today = datetime.now().date()
+        
+        for source_name, feed_url in rss_feeds.items():
+            if source_name.lower() not in query.lower() and "site:" not in query:
+                continue
+                
+            try:
+                logger.info(f"Buscando RSS de {source_name}: {feed_url}")
+                feed = feedparser.parse(feed_url)
+                
+                for entry in feed.entries[:max_results]:
+                    # Verificar se a notícia é de hoje
+                    if hasattr(entry, 'published'):
+                        pub_date = datetime.strptime(entry.published, '%a, %d %b %Y %H:%M:%S %z').date()
+                        if pub_date != today:
+                            continue
+                    
+                    results.append({
+                        "title": entry.title,
+                        "url": entry.link,
+                        "source": source_name.title(),
+                        "snippet": entry.summary if hasattr(entry, 'summary') else entry.title,
+                        "published_at": entry.published if hasattr(entry, 'published') else datetime.now().isoformat()
+                    })
+                    
+            except Exception as e:
+                logger.warning(f"Erro ao processar RSS de {source_name}: {e}")
+                continue
+        
+        return results
+    
+    def _scrape_news_sites(self, query: str, max_results: int) -> List[Dict]:
+        """Faz web scraping direto dos sites de notícias"""
+        try:
+            from newspaper import Article
+            import re
+            
+            # Sites para scraping
+            sites = {
+                "exame": "https://exame.com",
+                "veja": "https://veja.abril.com.br", 
+                "folha": "https://folha.uol.com.br",
+                "diario_nordeste": "https://diariodonordeste.verdesmares.com.br"
+            }
+            
+            results = []
+            today = datetime.now().date()
+            
+            for site_name, base_url in sites.items():
+                if site_name.lower() not in query.lower() and "site:" not in query:
+                    continue
+                    
+                try:
+                    logger.info(f"Scraping {site_name}: {base_url}")
+                    
+                    # Configurar artigo para scraping
+                    article = Article(base_url)
+                    article.config.browser_user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                    article.download()
+                    article.parse()
+                    
+                    # Extrair informações
+                    if article.title and len(article.title) > 10:
+                        # Verificar data de publicação
+                        pub_date = today
+                        if hasattr(article, 'publish_date') and article.publish_date:
+                            pub_date = article.publish_date.date()
+                        
+                        # Apenas notícias de hoje
+                        if pub_date == today:
+                            results.append({
+                                "title": article.title,
+                                "url": article.url,
+                                "source": site_name.title(),
+                                "snippet": article.text[:200] + "..." if article.text else article.title,
+                                "published_at": article.publish_date.isoformat() if hasattr(article, 'publish_date') else datetime.now().isoformat()
+                            })
+                            
+                except Exception as e:
+                    logger.warning(f"Erro ao fazer scraping de {site_name}: {e}")
+                    continue
+            
+            return results
+            
+        except ImportError:
+            logger.warning("newspaper3k não instalado, usando método alternativo")
+            return []
+        except Exception as e:
+            logger.error(f"Erro no scraping: {e}")
+            return []
+    
+    def _fallback_results(self, query: str, max_results: int) -> List[Dict]:
+        """Resultados mock em caso de falha nas buscas reais"""
+        logger.warning("Usando resultados mock devido a falha na busca real")
+        results = []
+        for i in range(min(max_results, 3)):
             results.append({
-                "title": f"Notícia {i+1} sobre {query}: Avanços em IA no Brasil",
-                "url": f"https://noticias-ia.com.br/artigo-{uuid.uuid4().hex[:6]}",
-                "source": "IA News",
-                "snippet": f"A inteligência artificial está transformando o cenário tecnológico brasileiro com novas parcerias no setor de {query}...",
+                "title": f"Notícia {i+1} sobre {query}: Desenvolvimentos recentes",
+                "url": f"https://exemplo.com.br/noticia-{uuid.uuid4().hex[:6]}",
+                "source": "Fonte Brasileira",
+                "snippet": f"Últimas atualizações sobre {query} no cenário nacional...",
                 "published_at": datetime.now().isoformat()
             })
         return results
@@ -78,13 +220,18 @@ class NewsUtils:
 
     def is_duplicate(self, source_url: str) -> bool:
         """
-        Verifica se a URL já existe no Supabase.
+        Verifica se a URL já existe no Supabase (tabela posts).
+        FIX_3: Usa a mesma normalização de URL que save_to_supabase
         """
         if not self.supabase_url or not self.supabase_key:
             return False
             
         try:
-            params = {"source_url": f"eq.{source_url}"}
+            # FIX_3: Normalizar URL da mesma forma que em save_to_supabase
+            normalized_url = source_url.strip().lower()
+            normalized_url = normalized_url.split('?')[0].split('#')[0]
+            
+            params = {"source_url": f"eq.{normalized_url}"}
             headers = {"apikey": self.supabase_key, "Authorization": f"Bearer {self.supabase_key}"}
             response = requests.get(self.supabase_url, params=params, headers=headers, timeout=10)
             if response.status_code == 200:
@@ -97,6 +244,8 @@ class NewsUtils:
     def save_to_supabase(self, data: Dict) -> Tuple[bool, str]:
         """
         Salva a notícia no Supabase no formato correto.
+        FIX_2: Com valores padrão para campos NOT NULL
+        FIX_3: Com normalização de URL para evitar duplicatas
         """
         if not self.supabase_url or not self.supabase_key:
             return False, "Credenciais Supabase ausentes"
@@ -109,23 +258,62 @@ class NewsUtils:
         }
 
         try:
-            # Flattening metadata if required by the DB schema
-            # O Banco parece ter colunas específicas baseadas no news_agent anterior
+            # FIX_3: Normalizar URL agressivamente para evitar duplicatas
+            source_url = data.get("source_url", "").strip().lower()
+            source_url = source_url.split('?')[0].split('#')[0]  # Remove tracking params
+            
+            # FIX_2: Valores padrão para campos obrigatórios
+            fonte = data.get("metadata", {}).get("source", "Web").strip()
+            if not fonte:
+                fonte = "News Collector"
+            
+            categoria = data.get("category", "geral").strip()
+            if not categoria:
+                categoria = "geral"
+            
+            # Usar campos corretos da tabela posts
+            # Preparar campos para compatibilidade com NewPost-IA
+            author_id = '3a1a93d0-e451-47a4-a126-f1b7375895eb'  # Autor fixo NewsAgent
+            
+            # Converter hashtags para tags array se existirem
+            hashtags = data.get("hashtags", []) or []
+            if isinstance(hashtags, str):
+                hashtags = [tag.strip() for tag in hashtags.split(',') if tag.strip()]
+            
+            # Preparar media arrays se houver image_url
+            media_urls = []
+            media_types = []
+            if data.get('image_url'):
+                media_urls = [data['image_url']]
+                media_types = ['image']
+            
             payload = {
-                "title": data["title"],
-                "content": data["content"],
-                "source_url": data["source_url"],
+                "title": data.get("title", "Sem Título").strip()[:150],
+                "source_url": source_url,  # URL normalizado
+                "content": data.get("content", ""),
                 "image_url": data.get("image_url"),
-                "category": data["category"],
-                "published_at": data["published_at"],
-                "status": data["status"], # Aqui usamos o 'draft' aprovado
-                "metadata": data["metadata"]
+                "category": categoria,  # Nunca vazio
+                "status": "draft", # Status para posts
+                "published_at": data.get("published_at", datetime.now().isoformat()),
+                # Campos para compatibilidade com NewPost-IA
+                "author_id": author_id,
+                "is_ia_generated": True,
+                "tags": hashtags if hashtags else None,
+                "media_urls": media_urls if media_urls else None,
+                "media_types": media_types if media_types else None,
+                "audio_url": data.get("audio_url"),
+                "metadata": {
+                    "author": "newsagent",
+                    "source": fonte,
+                    "is_ia_generated": True,
+                    "voxcraft": True  # Voxcraft: True para aparecer na interface
+                }
             }
 
             response = requests.post(self.supabase_url, json=payload, headers=headers, timeout=20)
             
-            if response.status_code in [201, 201]:
-                logger.info(f"Notícia salva com sucesso: {data['title']}")
+            if response.status_code in [201, 200]:
+                logger.info(f"Notícia salva com sucesso: {data.get('title', 'Sem Título')}")
                 return True, "Sucesso"
             else:
                 logger.error(f"Erro Supabase ({response.status_code}): {response.text}")

@@ -63,10 +63,12 @@ class NewsAgentSimple:
         try:
             self.log_info("Coletando notícias mock para teste")
             
+            # URLs únicas com timestamp para evitar duplicatas
+            timestamp = int(time.time())
             mock_news = [
                 {
                     "title": "Flamengo assume liderança isolada do Brasileirão 2026",
-                    "url": "https://ge.globo.com/futebol/times/flamengo/noticia/2026/04/17/flamengo-lider-brasileirao.ghtml",
+                    "url": f"https://ge.globo.com/futebol/times/flamengo/noticia/2026/04/17/flamengo-lider-brasileirao-{timestamp}.ghtml",
                     "source": "GE",
                     "source_domain": "ge.globo.com",
                     "published_at": datetime.utcnow().isoformat(),
@@ -76,7 +78,7 @@ class NewsAgentSimple:
                 },
                 {
                     "title": "Mercado da Bola: Flamengo monitora reforços para o Mundial de Clubes",
-                    "url": "https://colunadofla.com/2026/04/flamengo-mercado-bola-reforcos/",
+                    "url": f"https://colunadofla.com/2026/04/flamengo-mercado-bola-reforcos-{timestamp}/",
                     "source": "Coluna do Fla",
                     "source_domain": "colunadofla.com",
                     "published_at": datetime.utcnow().isoformat(),

@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News Auto Post - Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #581c87 50%, #0f172a 100%);
+            min-height: 100vh;
+            color: white;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 48px;
+            font-weight: bold;
+            background: linear-gradient(to right, white, #e0e7ff, #c7d2fe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #94a3b8;
+            font-size: 18px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .card {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid #6b21a8;
+            border-radius: 12px;
+            padding: 24px;
+            backdrop-filter: blur(10px);
+        }
+
+        .card h2 {
+            color: white;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .status-running {
+            background: #4ade80;
+            animation: pulse 2s infinite;
+        }
+
+        .status-stopped {
+            background: #64748b;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .button-primary {
+            background: linear-gradient(to right, #16a34a, #059669);
+            color: white;
+        }
+
+        .button-primary:hover {
+            background: linear-gradient(to right, #15803d, #047857);
+        }
+
+        .button-secondary {
+            background: transparent;
+            color: #ef4444;
+            border: 1px solid #991b1b;
+        }
+
+        .button-secondary:hover {
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .button-outline {
+            background: transparent;
+            color: #3b82f6;
+            border: 1px solid #1e40af;
+        }
+
+        .button-outline:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .source-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: rgba(51, 65, 85, 0.5);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .source-info h3 {
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .source-info p {
+            color: #64748b;
+            font-size: 12px;
+        }
+
+        .switch {
+            position: relative;
+            width: 48px;
+            height: 24px;
+            background: #64748b;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .switch.active {
+            background: #16a34a;
+        }
+
+        .switch-handle {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.2s;
+        }
+
+        .switch.active .switch-handle {
+            transform: translateX(24px);
+        }
+
+        .logs {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 12px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .log-entry {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .log-time {
+            color: #475569;
+        }
+
+        .log-success { color: #4ade80; }
+        .log-error { color: #ef4444; }
+        .log-warning { color: #facc15; }
+        .log-info { color: #94a3b8; }
+
+        .preview {
+            background: rgba(20, 83, 45, 0.2);
+            border: 1px solid #16a34a;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .preview h3 {
+            color: #4ade80;
+            margin-bottom: 12px;
+        }
+
+        .preview-title {
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .preview-summary {
+            color: #94a3b8;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        .badge {
+            background: rgba(22, 101, 52, 0.2);
+            color: #4ade80;
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+        .info-box {
+            background: rgba(20, 83, 45, 0.2);
+            border: 1px solid #16a34a;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 24px;
+        }
+
+        .info-box h3 {
+            color: #4ade80;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .info-box p {
+            color: #94a3b8;
+            font-size: 12px;
+        }
+
+        .clear-logs {
+            background: transparent;
+            color: #64748b;
+            border: none;
+            font-size: 12px;
+            cursor: pointer;
+            margin-top: 12px;
+        }
+
+        .clear-logs:hover {
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>News Auto Post</h1>
+            <p>Sistema de automação de notícias - Versão Simplificada</p>
+        </div>
+
+        <div class="grid">
+            <!-- Painel de Controle -->
+            <div>
+                <div class="card">
+                    <h2>
+                        <span class="status-indicator" id="statusIndicator"></span>
+                        Status da Automação
+                    </h2>
+                    
+                    <div id="statusText" style="margin-bottom: 16px;">
+                        <span id="statusLabel">Pausado</span>
+                    </div>
+
+                    <div class="button-group">
+                        <button id="startBtn" class="button button-primary" onclick="startAutomation()">
+                            Iniciar Automação
+                        </button>
+                        <button id="stopBtn" class="button button-secondary" onclick="stopAutomation()" style="display: none;">
+                            Pausar
+                        </button>
+                        <button id="executeBtn" class="button button-outline" onclick="executeNow()">
+                            Executar Agora
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 24px;">
+                    <h2>Configurações de Publicação</h2>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: rgba(51, 65, 85, 0.5); border-radius: 8px;">
+                            <div>
+                                <div style="color: white; font-size: 14px; font-weight: 500; margin-bottom: 4px;">Modo de Publicação</div>
+                                <div style="color: #64748b; font-size: 12px;">Escolha entre simulado ou real</div>
+                            </div>
+                            <select id="publishMode" onchange="changePublishMode()" style="background: #334155; color: white; border: 1px solid #475569; padding: 8px; border-radius: 4px;">
+                                <option value="simulated">Simulado (Teste)</option>
+                                <option value="real">Real (NewPost-IA)</option>
+                            </select>
+                        </div>
+                        
+                        <div id="publishModeInfo" style="margin-top: 8px; font-size: 12px; color: #64748b;">
+                            Modo atual: <span id="currentMode" style="color: #4ade80;">Simulado</span> - As publicações são apenas para teste
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 24px;">
+                    <h2>Fontes de Notícias</h2>
+                    
+                    <div class="source-item">
+                        <div class="source-info">
+                            <h3>Exame</h3>
+                            <p>https://exame.com</p>
+                        </div>
+                        <div class="switch active" data-source="exame" onclick="toggleSource('exame')">
+                            <div class="switch-handle"></div>
+                        </div>
+                    </div>
+
+                    <div class="source-item">
+                        <div class="source-info">
+                            <h3>Veja</h3>
+                            <p>https://veja.abril.com.br</p>
+                        </div>
+                        <div class="switch active" data-source="veja" onclick="toggleSource('veja')">
+                            <div class="switch-handle"></div>
+                        </div>
+                    </div>
+
+                    <div class="source-item">
+                        <div class="source-info">
+                            <h3>Folha de S.Paulo</h3>
+                            <p>https://folha.uol.com.br</p>
+                        </div>
+                        <div class="switch active" data-source="folha" onclick="toggleSource('folha')">
+                            <div class="switch-handle"></div>
+                        </div>
+                    </div>
+
+                    <div class="source-item">
+                        <div class="source-info">
+                            <h3>Diário do Nordeste</h3>
+                            <p>https://diariodonordeste.verdesmares.com.br</p>
+                        </div>
+                        <div class="switch active" data-source="diario_nordeste" onclick="toggleSource('diario_nordeste')">
+                            <div class="switch-handle"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Logs e Preview -->
+            <div>
+                <div id="preview" class="preview" style="display: none;">
+                    <h3>Última Notícia Publicada</h3>
+                    <div id="previewTitle" class="preview-title"></div>
+                    <div id="previewSummary" class="preview-summary"></div>
+                    <span class="badge">Publicado</span>
+                </div>
+
+                <div class="card">
+                    <h2>Logs de Execução</h2>
+                    
+                    <div id="logs" class="logs">
+                        <div style="color: #64748b; text-align: center; padding: 32px;">
+                            Nenhuma execução ainda. Clique em "Iniciar Automação".
+                        </div>
+                    </div>
+
+                    <button class="clear-logs" onclick="clearLogs()">Limpar log</button>
+                </div>
+
+                <div class="card" style="margin-bottom: 24px;">
+                    <h2>Publicações Salvas</h2>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <span style="color: #94a3b8; font-size: 14px;">Total: <span id="totalPublications" style="color: white; font-weight: bold;">0</span> publicações</span>
+                        <button onclick="loadPublications()" class="button button-outline" style="padding: 8px 16px; font-size: 12px;">
+                            Atualizar
+                        </button>
+                    </div>
+                    
+                    <div id="publicationsList" style="max-height: 300px; overflow-y: auto;">
+                        <div style="color: #64748b; text-align: center; padding: 32px;">
+                            Nenhuma publicação ainda. Inicie a automação para ver as publicações aqui.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <h3>Sistema Funcionando</h3>
+                    <p>Backend: http://localhost:5000 | Frontend: HTML Puro</p>
+                    <p>Servidor simplificado sem dependências complexas</p>
+                    <p>Publicações salvas em memória real do sistema</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin; // Usa URL atual da Vercel
+        let isRunning = true;
+        let logs = [];
+        let enabledSources = {
+            exame: true,
+            veja: true,
+            folha: true,
+            diario_nordeste: true
+        };
+        let automationInterval = null;
+        let countdownInterval = null;
+        let nextRunIn = 10;
+
+        function addLog(message, type = 'info') {
+            const time = new Date().toLocaleTimeString('pt-BR');
+            logs.push({ message, type, time });
+            updateLogsDisplay();
+        }
+
+        function updateLogsDisplay() {
+            const logsContainer = document.getElementById('logs');
+            if (logs.length === 0) {
+                logsContainer.innerHTML = '<div style="color: #64748b; text-align: center; padding: 32px;">Nenhuma execução ainda. Clique em "Iniciar Automação".</div>';
+                return;
+            }
+
+            logsContainer.innerHTML = logs.map(log => `
+                <div class="log-entry">
+                    <span class="log-time">${log.time}</span>
+                    <span class="log-${log.type}">${log.message}</span>
+                </div>
+            `).join('');
+            
+            logsContainer.scrollTop = logsContainer.scrollHeight;
+        }
+
+        function updateStatus(running) {
+            isRunning = running;
+            const indicator = document.getElementById('statusIndicator');
+            const label = document.getElementById('statusLabel');
+            const startBtn = document.getElementById('startBtn');
+            const stopBtn = document.getElementById('stopBtn');
+
+            if (running) {
+                indicator.className = 'status-indicator status-running';
+                label.textContent = 'Rodando';
+                startBtn.style.display = 'none';
+                stopBtn.style.display = 'block';
+            } else {
+                indicator.className = 'status-indicator status-stopped';
+                label.textContent = 'Continuo';
+                startBtn.style.display = 'block';
+                stopBtn.style.display = 'none';
+            }
+        }
+
+        function toggleSource(sourceId) {
+            enabledSources[sourceId] = !enabledSources[sourceId];
+            const switchElement = document.querySelector(`[data-source="${sourceId}"]`);
+            switchElement.classList.toggle('active');
+        }
+
+        async function startAutomation() {
+            try {
+                // Iniciar automação local com horários configurados
+                updateStatus(true);
+                addLog('Automação iniciada com sucesso!', 'success');
+                addLog('Usando horários configurados: 09:10, 12:00, 18:00', 'info');
+                
+                // Iniciar contador regressivo baseado nos horários configurados
+                startScheduledCountdown();
+                
+                // Iniciar sistema de agendamento baseado em horários
+                startScheduledAutomation();
+                
+            } catch (error) {
+                addLog(`Erro: ${error.message}`, 'error');
+            }
+        }
+
+        function startScheduledCountdown() {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+            countdownInterval = setInterval(() => {
+                updateScheduledCountdown();
+            }, 1000);
+        }
+
+        function startScheduledAutomation() {
+            // Verificar a cada minuto se está na hora de executar
+            if (automationInterval) {
+                clearInterval(automationInterval);
+            }
+            automationInterval = setInterval(() => {
+                checkAndExecuteScheduled();
+            }, 60000); // Verificar a cada minuto
+        }
+
+        function updateScheduledCountdown() {
+            const now = new Date();
+            const scheduledTimes = ['09:10', '12:00', '18:00'];
+            
+            // Encontrar próximo horário agendado
+            let nextTime = null;
+            let minDiff = Infinity;
+            
+            for (const time of scheduledTimes) {
+                const [hours, minutes] = time.split(':').map(Number);
+                const scheduled = new Date();
+                scheduled.setHours(hours, minutes, 0, 0);
+                
+                // Se o horário já passou hoje, agendar para amanhã
+                if (scheduled <= now) {
+                    scheduled.setDate(scheduled.getDate() + 1);
+                }
+                
+                const diff = scheduled - now;
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    nextTime = scheduled;
+                }
+            }
+            
+            if (nextTime) {
+                const totalSeconds = Math.floor(minDiff / 1000);
+                const hours = Math.floor(totalSeconds / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = totalSeconds % 60;
+                
+                let timeString = '';
+                if (hours > 0) {
+                    timeString = `${hours}h ${minutes}m ${seconds}s`;
+                } else {
+                    timeString = `${minutes}m ${seconds}s`;
+                }
+                
+                document.getElementById('countdown').textContent = 
+                    `Próxima execução em: ${timeString} (${nextTime.toLocaleTimeString('pt-BR')})`;
+            }
+        }
+
+        function checkAndExecuteScheduled() {
+            const now = new Date();
+            const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+            const scheduledTimes = ['09:10', '12:00', '18:00'];
+            
+            if (scheduledTimes.includes(currentTime)) {
+                // Executar apenas se não executou nos últimos 2 minutos
+                const lastExecution = localStorage.getItem('lastScheduledExecution');
+                const nowMs = now.getTime();
+                
+                if (!lastExecution || (nowMs - parseInt(lastExecution)) > 120000) {
+                    addLog(`Executando agendamento automático (${currentTime})`, 'info');
+                    executeNow();
+                    localStorage.setItem('lastScheduledExecution', nowMs.toString());
+                }
+            }
+        }
+
+        function updateCountdownDisplay() {
+            if (nextRunIn > 0) {
+                const minutes = Math.floor(nextRunIn / 60);
+                const seconds = nextRunIn % 60;
+                document.getElementById('countdown').textContent = 
+                    `Próxima execução em: ${minutes}:${seconds.toString().padStart(2, '0')} (${minutes} minutos)`;
+            } else {
+                document.getElementById('countdown').textContent = 'Executando...';
+            }
+        }
+
+        async function stopAutomation() {
+            try {
+                // Parar timers locais
+                if (automationInterval) {
+                    clearInterval(automationInterval);
+                    automationInterval = null;
+                }
+                if (countdownInterval) {
+                    clearInterval(countdownInterval);
+                    countdownInterval = null;
+                }
+                
+                updateStatus(false);
+                addLog('Automação parada', 'warning');
+                
+                // Limpar display do contador
+                const countdownElement = document.getElementById('countdown');
+                if (countdownElement) {
+                    countdownElement.innerHTML = '';
+                }
+                
+            } catch (error) {
+                addLog(`Erro: ${error.message}`, 'error');
+            }
+        }
+
+        async function executeNow() {
+            const executeBtn = document.getElementById('executeBtn');
+            executeBtn.disabled = true;
+            executeBtn.textContent = '...';
+
+            try {
+                addLog('Buscando notícia...', 'info');
+
+                const response = await fetch(`${API_BASE}/api/news/execute`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ enabled_sources: enabledSources })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    addLog(`Notícia encontrada: ${result.title}`, 'success');
+                    showPreview(result);
+
+                    // Publicar
+                    await publishToNewPostIA({
+                        content: `${result.title}\n\n${result.summary}`,
+                        hashtags: []
+                    });
+                    addLog('Publicado com sucesso!', 'success');
+                } else {
+                    const errorMsg = result.error || 'Erro desconhecido';
+                    addLog(`Erro ao buscar notícia: ${errorMsg}`, 'error');
+                }
+            } catch (error) {
+                addLog(`Erro: ${error.message}`, 'error');
+            } finally {
+                executeBtn.disabled = false;
+                executeBtn.textContent = 'Executar Agora';
+            }
+        }
+
+        async function publishToNewPostIA(data) {
+            try {
+                const response = await fetch(`${API_BASE}/api/newpost/publish`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                return await response.json();
+            } catch (error) {
+                console.error('Erro ao publicar:', error);
+                throw error;
+            }
+        }
+
+        function showPreview(news) {
+            const preview = document.getElementById('preview');
+            const title = document.getElementById('previewTitle');
+            const summary = document.getElementById('previewSummary');
+
+            preview.style.display = 'block';
+            title.textContent = news.title;
+            summary.textContent = news.summary;
+        }
+
+        function changePublishMode() {
+            const mode = document.getElementById('publishMode').value;
+            const currentModeSpan = document.getElementById('currentMode');
+            const modeInfo = document.getElementById('publishModeInfo');
+            
+            if (mode === 'real') {
+                currentModeSpan.textContent = 'Real';
+                currentModeSpan.style.color = '#ef4444';
+                modeInfo.innerHTML = 'Modo atual: <span id="currentMode" style="color: #ef4444;">Real</span> - As publicações serão enviadas para NewPost-IA real';
+                addLog('Modo alterado para REAL - As publicações serão enviadas para NewPost-IA', 'warning');
+            } else {
+                currentModeSpan.textContent = 'Simulado';
+                currentModeSpan.style.color = '#4ade80';
+                modeInfo.innerHTML = 'Modo atual: <span id="currentMode" style="color: #4ade80;">Simulado</span> - As publicações são apenas para teste';
+                addLog('Modo alterado para SIMULADO - Apenas testes', 'info');
+            }
+        }
+
+        async function loadPublications() {
+            try {
+                const response = await fetch(`${API_BASE}/api/publications`);
+                const data = await response.json();
+                
+                const publicationsList = document.getElementById('publicationsList');
+                const totalPublications = document.getElementById('totalPublications');
+                
+                totalPublications.textContent = data.total;
+                
+                if (data.publications.length === 0) {
+                    publicationsList.innerHTML = `
+                        <div style="color: #64748b; text-align: center; padding: 32px;">
+                            Nenhuma publicação ainda. Inicie a automação para ver as publicações aqui.
+                        </div>
+                    `;
+                } else {
+                    // Ordenar por data (mais recentes primeiro)
+                    const sortedPublications = data.publications.sort((a, b) => 
+                        new Date(b.published_at) - new Date(a.published_at)
+                    );
+                    
+                    publicationsList.innerHTML = sortedPublications.map(pub => `
+                        <div style="background: #334155; border-radius: 8px; padding: 12px; margin-bottom: 8px; border-left: 3px solid #4ade80;">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                                <span style="color: #4ade80; font-size: 12px; font-weight: bold;">ID: ${pub.post_id}</span>
+                                <span style="color: #64748b; font-size: 11px;">${new Date(pub.published_at).toLocaleString('pt-BR')}</span>
+                            </div>
+                            <div style="color: white; font-size: 13px; margin-bottom: 8px; line-height: 1.4;">
+                                ${pub.content}
+                            </div>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                ${pub.hashtags.length > 0 ? `
+                                    <div style="display: flex; gap: 4px;">
+                                        ${pub.hashtags.map(tag => `
+                                            <span style="background: #1e293b; color: #3b82f6; font-size: 10px; padding: 2px 6px; border-radius: 4px;">
+                                                #${tag}
+                                            </span>
+                                        `).join('')}
+                                    </div>
+                                ` : ''}
+                                <span style="background: #14532d; color: #4ade80; font-size: 10px; padding: 2px 6px; border-radius: 4px;">
+                                    ${pub.published_to}
+                                </span>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+                
+                addLog(`Carregadas ${data.total} publicações`, 'info');
+                
+            } catch (error) {
+                addLog(`Erro ao carregar publicações: ${error.message}`, 'error');
+            }
+        }
+
+        function clearLogs() {
+            logs = [];
+            updateLogsDisplay();
+        }
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            addLog('Sistema carregado com sucesso', 'success');
+            addLog('Backend conectado em http://localhost:5000', 'info');
+            addLog('Modo de publicação: SIMULADO (apenas testes)', 'info');
+            updateStatus(false);
+            
+            // Carregar publicações iniciais
+            loadPublications();
+        });
+    </script>
+</body>
+</html>

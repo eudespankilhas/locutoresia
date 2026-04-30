@@ -180,14 +180,22 @@ def execute_news():
         
         # Adaptar formato para o frontend do News Auto Post
         if result.get('success') and result.get('news') and len(result['news']) > 0:
-            first_news = result['news'][0]
+            # Retornar TODAS as notícias, não apenas a primeira
+            news_list = []
+            for news_item in result['news']:
+                news_list.append({
+                    "title": news_item.get('title', ''),
+                    "summary": news_item.get('summary', news_item.get('content', '')),
+                    "source": news_item.get('source', 'Desconhecida'),
+                    "url": news_item.get('url', ''),
+                    "category": news_item.get('category', ''),
+                    "published_at": news_item.get('published_at', '')
+                })
+            
             return jsonify({
                 "success": True,
-                "title": first_news.get('title', ''),
-                "summary": first_news.get('summary', first_news.get('content', '')),
-                "source": first_news.get('source', 'Desconhecida'),
-                "url": first_news.get('url', ''),
-                "total": result.get('total_news', 0)
+                "news": news_list,
+                "total": len(news_list)
             })
         else:
             return jsonify({
@@ -1220,12 +1228,70 @@ def api_list_social_posts():
 @app.route('/api/social/posts', methods=['POST'])
 def api_create_social_post():
     """Cria um novo SocialPost"""
-    if not HAS_SOCIAL_PUBLISHER:
-        return jsonify({"success": False, "error": "Social Publisher não disponível"}), 503
     data = request.get_json()
     if not data or not data.get('title'):
         return jsonify({"success": False, "error": "Título é obrigatório"}), 400
 
+    # Se social_publisher não estiver disponível, salvar diretamente no Supabase
+    if not HAS_SOCIAL_PUBLISHER:
+        try:
+            supabase_url = os.getenv('SUPABASE_URL', 'https://ravpbfkicqkwjxejuzty.supabase.co').rstrip('/')
+            supabase_key = os.getenv('SUPABASE_SERVICE_KEY', os.getenv('SUPABASE_ANON_KEY', ''))
+            
+            print(f"[DEBUG] Salvando post - URL: {supabase_url}")
+            print(f"[DEBUG] Título: {data.get('title', '')[:50]}...")
+            
+            if not supabase_url or not supabase_key:
+                return jsonify({"success": False, "error": "Credenciais Supabase não configuradas"}), 500
+            
+            headers = {
+                'apikey': supabase_key,
+                'Authorization': f'Bearer {supabase_key}',
+                'Content-Type': 'application/json'
+            }
+            
+            post_data = {
+                'title': data.get('title', ''),
+                'content': data.get('caption', ''),
+                'source_url': data.get('source_url', ''),
+                'status': data.get('status', 'draft'),
+                'hashtags': data.get('hashtags', ['noticia', 'brasil']),
+                'created_at': datetime.now(timezone.utc).isoformat(),
+                'updated_at': datetime.now(timezone.utc).isoformat()
+            }
+            
+            print(f"[DEBUG] Post data: {post_data}")
+            
+            response = requests.post(
+                f"{supabase_url}/rest/v1/posts",
+                json=post_data,
+                headers=headers,
+                timeout=10
+            )
+            
+            print(f"[DEBUG] Save response status: {response.status_code}")
+            
+            if response.status_code in (200, 201):
+                result = response.json()
+                post_id = result[0].get('id') if isinstance(result, list) and result else None
+                print(f"[DEBUG] Post salvo com ID: {post_id}")
+                return jsonify({
+                    "success": True,
+                    "post_id": post_id,
+                    "message": "Rascunho salvo no Supabase"
+                }), 201
+            else:
+                print(f"[DEBUG] Erro ao salvar: {response.text}")
+                return jsonify({
+                    "success": False,
+                    "error": f"Erro ao salvar no Supabase: {response.status_code}"
+                }), response.status_code
+                
+        except Exception as e:
+            print(f"[DEBUG] Exceção ao salvar: {e}")
+            return jsonify({"success": False, "error": str(e)}), 500
+
+    # Usar social_publisher se disponível
     result = social_publisher.create_post(
         title=data.get('title', ''),
         caption=data.get('caption', ''),
@@ -1943,12 +2009,111 @@ def newpost_publish():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
-@app.route('/api/publications', methods=['GET'])
-def list_publications():
-    """Lista publicações do News Auto Post"""
+@app.route('/api/publications', methods=['GET', 'DELETE'])
+def handle_publications():
+    """Lista ou limpa publicações do News Auto Post"""
+    if request.method == 'DELETE':
+        """Limpa todas as publicações"""
+        try:
+            supabase_url = os.getenv('SUPABASE_URL', 'https://ravpbfkicqkwjxejuzty.supabase.co').rstrip('/')
+            supabase_key = os.getenv('SUPABASE_SERVICE_KEY', os.getenv('SUPABASE_ANON_KEY', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhdnBiZmtpY3Frd2p4ZWp1enR5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzMxNDMwOCwiZXhwIjoyMDkyODkwMzA4fQ.QAHywO5Uu70dmcMQM7t7EslEqZG4y79-kLUIxPR81RM'))
+            
+            if not supabase_url or not supabase_key:
+                return jsonify({"success": False, "error": "Credenciais não configuradas"}), 500
+            
+            headers = {
+                'apikey': supabase_key,
+                'Authorization': f'Bearer {supabase_key}',
+                'Content-Type': 'application/json',
+                'Prefer': 'return=representation'
+            }
+            
+            # Contar posts antes
+            count_response = requests.get(
+                f"{supabase_url}/rest/v1/posts?select=count",
+                headers=headers,
+                timeout=10
+            )
+            
+            count = 0
+            if count_response.status_code == 200:
+                try:
+                    count_data = count_response.json()
+                    count = count_data[0].get('count', 0) if isinstance(count_data, list) and count_data else 0
+                except:
+                    pass
+            
+            if count == 0:
+                return jsonify({
+                    "success": True,
+                    "message": "Nenhuma publicação para limpar"
+                })
+            
+            # Deletar todos os posts usando filtro que seleciona todos
+            # Supabase permite deletar com filtro id=not.is.null para selecionar todos
+            delete_response = requests.delete(
+                f"{supabase_url}/rest/v1/posts?id=not.is.null",
+                headers=headers,
+                timeout=30
+            )
+            
+            if delete_response.status_code in (200, 204):
+                return jsonify({
+                    "success": True,
+                    "message": f"{count} publicações limpas com sucesso",
+                    "deleted_count": count
+                })
+            
+            # Fallback: se o filtro acima não funcionar, buscar IDs e deletar individualmente
+            print("⚠️ Filtro batch falhou, usando deleção individual...")
+            response = requests.get(
+                f"{supabase_url}/rest/v1/posts?select=id",
+                headers=headers,
+                timeout=15
+            )
+            
+            if response.status_code != 200:
+                return jsonify({
+                    "success": False,
+                    "error": f"Erro ao buscar IDs: {response.status_code}"
+                }), response.status_code
+            
+            posts = response.json()
+            deleted_count = 0
+            
+            for post in posts:
+                post_id = post.get('id')
+                if post_id:
+                    delete_response = requests.delete(
+                        f"{supabase_url}/rest/v1/posts?id=eq.{post_id}",
+                        headers=headers,
+                        timeout=5
+                    )
+                    if delete_response.status_code in (200, 204):
+                        deleted_count += 1
+            
+            if deleted_count > 0:
+                return jsonify({
+                    "success": True,
+                    "message": f"{deleted_count} publicações limpas com sucesso (modo fallback)",
+                    "deleted_count": deleted_count
+                })
+            else:
+                return jsonify({
+                    "success": False,
+                    "error": "Nenhuma publicação foi deletada"
+                }), 500
+            
+        except Exception as e:
+            return jsonify({"success": False, "error": str(e)}), 500
+    
+    # GET - Listar publicações
     try:
         supabase_url = os.getenv('SUPABASE_URL', 'https://ravpbfkicqkwjxejuzty.supabase.co').rstrip('/')
         supabase_key = os.getenv('SUPABASE_SERVICE_KEY', os.getenv('SUPABASE_ANON_KEY', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhdnBiZmtpY3Frd2p4ZWp1enR5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzMxNDMwOCwiZXhwIjoyMDkyODkwMzA4fQ.QAHywO5Uu70dmcMQM7t7EslEqZG4y79-kLUIxPR81RM'))
+        
+        print(f"[DEBUG] Listando publicações - URL: {supabase_url}")
+        print(f"[DEBUG] Supabase Key presente: {bool(supabase_key)}")
         
         if not supabase_url or not supabase_key:
             return jsonify({"success": False, "error": "Credenciais não configuradas"}), 500
@@ -1966,13 +2131,18 @@ def list_publications():
             timeout=10
         )
         
+        print(f"[DEBUG] Response status: {response.status_code}")
+        
         if response.status_code == 200:
             posts = response.json()
+            print(f"[DEBUG] Posts encontrados: {len(posts)}")
             return jsonify({
                 "success": True,
                 "total": len(posts),
                 "publications": posts
             })
+        
+        print(f"[DEBUG] Erro na resposta: {response.text}")
         
         return jsonify({
             "success": False,

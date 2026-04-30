@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Posts Sociais — NewPost-IA | Locutores IA</title>
+    <meta name="description" content="Gerencie e publique conteúdo automaticamente na NewPost-IA com IA integrada">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    <style>
+        :root {
+            --newpost-purple: #7C3AED;
+            --newpost-pink: #EC4899;
+            --newpost-cyan: #06B6D4;
+            --newpost-dark: #0F0F1A;
+            --newpost-card: #1A1A2E;
+            --newpost-border: rgba(124, 58, 237, 0.3);
+            --gradient-primary: linear-gradient(135deg, #7C3AED 0%, #EC4899 100%);
+            --gradient-card: linear-gradient(135deg, #1A1A2E 0%, #16213E 100%);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--newpost-dark);
+            color: #E2E8F0;
+            min-height: 100vh;
+        }
+
+        /* ---- HEADER ---- */
+        .social-header {
+            background: linear-gradient(135deg, #0F0F1A 0%, #1A0A2E 50%, #0F1A2E 100%);
+            border-bottom: 1px solid var(--newpost-border);
+            padding: 1rem 0;
+        }
+        .brand-badge {
+            background: var(--gradient-primary);
+            color: #fff;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 20px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .newpost-logo-link {
+            color: #EC4899;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+        .newpost-logo-link:hover { color: #F9A8D4; }
+
+        /* ---- HERO ---- */
+        .page-hero {
+            background: linear-gradient(135deg, rgba(124,58,237,0.15) 0%, rgba(236,72,153,0.1) 50%, rgba(6,182,212,0.1) 100%);
+            border-bottom: 1px solid var(--newpost-border);
+            padding: 2.5rem 0 2rem;
+        }
+        .page-hero h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .platform-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(124,58,237,0.2);
+            border: 1px solid var(--newpost-border);
+            border-radius: 20px;
+            padding: 4px 14px;
+            font-size: 0.8rem;
+            color: #C4B5FD;
+        }
+
+        /* ---- STATS CARDS ---- */
+        .stat-card {
+            background: var(--gradient-card);
+            border: 1px solid var(--newpost-border);
+            border-radius: 16px;
+            padding: 1.25rem;
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 32px rgba(124,58,237,0.25);
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 800;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .stat-label { font-size: 0.75rem; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* ---- FILTER TABS ---- */
+        .filter-tabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #94A3B8;
+            border-radius: 20px;
+            padding: 6px 18px;
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .filter-btn:hover, .filter-btn.active {
+            background: var(--gradient-primary);
+            border-color: transparent;
+            color: #fff;
+        }
+
+        /* ---- POST CARD ---- */
+        .post-card {
+            background: var(--gradient-card);
+            border: 1px solid var(--newpost-border);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-bottom: 1.25rem;
+        }
+        .post-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 40px rgba(124,58,237,0.2);
+        }
+        .post-card-header {
+            padding: 1rem 1.25rem 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .post-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #F1F5F9;
+            margin: 0;
+            line-height: 1.4;
+        }
+        .post-caption {
+            font-size: 0.875rem;
+            color: #94A3B8;
+            padding: 0.5rem 1.25rem;
+            line-height: 1.6;
+        }
+        .post-image {
+            width: 100%;
+            max-height: 180px;
+            object-fit: cover;
+        }
+        .post-meta {
+            padding: 0.75rem 1.25rem;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .post-actions {
+            padding: 0.75rem 1.25rem 1rem;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .hashtag-chip {
+            background: rgba(124,58,237,0.2);
+            color: #C4B5FD;
+            font-size: 0.72rem;
+            padding: 2px 10px;
+            border-radius: 20px;
+            border: 1px solid rgba(124,58,237,0.3);
+        }
+
+        /* ---- STATUS BADGES ---- */
+        .status-badge {
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 3px 12px;
+            border-radius: 20px;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+        .status-rascunho  { background: rgba(100,116,139,0.25); color: #94A3B8; border: 1px solid rgba(100,116,139,0.4); }
+        .status-pendente  { background: rgba(245,158,11,0.2);  color: #FCD34D; border: 1px solid rgba(245,158,11,0.4); }
+        .status-aprovado  { background: rgba(16,185,129,0.2);  color: #6EE7B7; border: 1px solid rgba(16,185,129,0.4); }
+        .status-rejeitado { background: rgba(239,68,68,0.2);   color: #FCA5A5; border: 1px solid rgba(239,68,68,0.4); }
+        .status-publicado { background: rgba(124,58,237,0.25); color: #C4B5FD; border: 1px solid rgba(124,58,237,0.5); }
+        .status-agendado  { background: rgba(6,182,212,0.2);   color: #67E8F9; border: 1px solid rgba(6,182,212,0.4); }
+        .status-erro      { background: rgba(239,68,68,0.15);  color: #F87171; border: 1px solid rgba(239,68,68,0.3); }
+
+        /* ---- BUTTONS ---- */
+        .btn-newpost {
+            background: var(--gradient-primary);
+            border: none;
+            color: #fff;
+            border-radius: 10px;
+            font-weight: 600;
+            padding: 8px 20px;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        .btn-newpost:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(124,58,237,0.4);
+            color: #fff;
+        }
+        .btn-dark-outline {
+            background: transparent;
+            border: 1px solid var(--newpost-border);
+            color: #C4B5FD;
+            border-radius: 10px;
+            font-size: 0.82rem;
+            padding: 6px 14px;
+            transition: all 0.2s;
+        }
+        .btn-dark-outline:hover {
+            background: rgba(124,58,237,0.15);
+            color: #E9D5FF;
+        }
+        .btn-success-soft {
+            background: rgba(16,185,129,0.15);
+            border: 1px solid rgba(16,185,129,0.4);
+            color: #6EE7B7;
+            border-radius: 10px;
+            font-size: 0.82rem;
+            padding: 6px 14px;
+            transition: all 0.2s;
+        }
+        .btn-success-soft:hover { background: rgba(16,185,129,0.3); color: #A7F3D0; }
+        .btn-danger-soft {
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.3);
+            color: #FCA5A5;
+            border-radius: 10px;
+            font-size: 0.82rem;
+            padding: 6px 14px;
+            transition: all 0.2s;
+        }
+        .btn-danger-soft:hover { background: rgba(239,68,68,0.2); color: #FEE2E2; }
+        .btn-publish {
+            background: linear-gradient(135deg, #7C3AED, #06B6D4);
+            border: none;
+            color: #fff;
+            border-radius: 10px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            padding: 6px 16px;
+            transition: all 0.2s;
+        }
+        .btn-publish:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(6,182,212,0.35);
+            color: #fff;
+        }
+
+        /* ---- MODAL ---- */
+        .modal-content {
+            background: #1A1A2E;
+            border: 1px solid var(--newpost-border);
+            border-radius: 20px;
+            color: #E2E8F0;
+        }
+        .modal-header { border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .modal-footer { border-top: 1px solid rgba(255,255,255,0.08); }
+        .form-control, .form-select {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.12);
+            color: #E2E8F0;
+            border-radius: 10px;
+        }
+        .form-control:focus, .form-select:focus {
+            background: rgba(255,255,255,0.08);
+            border-color: var(--newpost-purple);
+            box-shadow: 0 0 0 3px rgba(124,58,237,0.2);
+            color: #E2E8F0;
+        }
+        .form-label { color: #94A3B8; font-size: 0.82rem; font-weight: 500; }
+        textarea.form-control { resize: vertical; }
+
+        /* ---- AVATAR DE ÁUDIO ---- */
+        .audio-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            color: #67E8F9;
+            font-size: 0.78rem;
+        }
+        .audio-wave { color: #06B6D4; animation: wave 1s infinite; }
+        @keyframes wave {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* ---- EMPTY STATE ---- */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #475569;
+        }
+        .empty-state i { font-size: 3rem; margin-bottom: 1rem; color: #334155; }
+
+        /* ---- TOAST ---- */
+        .toast-container { z-index: 9999; }
+        .toast-success { background: rgba(16,185,129,0.95); color: #fff; border-radius: 12px; }
+        .toast-error { background: rgba(239,68,68,0.95); color: #fff; border-radius: 12px; }
+
+        /* ---- LOADING PULSE ---- */
+        .loading-pulse {
+            display: inline-block;
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--newpost-purple);
+            animation: pulse 1s infinite;
+            margin-right: 6px;
+        }
+        @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.5); opacity: 0.6; } }
+
+        /* ---- NAVBAR LOCAL ---- */
+        .nav-link-social { color: #C4B5FD !important; font-weight: 500; }
+        .nav-link-social.active, .nav-link-social:hover { color: #fff !important; }
+    </style>
+</head>
+<body>
+
+<!-- Navigation Menu -->
+<nav class="navbar navbar-expand-lg navbar-dark sticky-top" style="background: rgba(30, 41, 59, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(139, 92, 246, 0.3);">
+    <div class="container">
+        <a class="navbar-brand d-flex align-items-center gap-2" href="/">
+            <div class="p-2 bg-primary/10 rounded-lg">
+                <i class="fas fa-brain fa-lg text-primary"></i>
+            </div>
+            <div>
+                <span class="fw-bold text-white">Locutores IA</span>
+                <div class="small text-secondary">Sistema Multi-Agentes</div>
+            </div>
+        </a>
+        
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link text-light" href="/">
+                        <i class="fas fa-home me-1"></i>Início
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-light" href="/ai-dashboard">
+                        <i class="fas fa-brain me-1"></i>Central IA
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-light active" href="/social-posts">
+                        <i class="fas fa-share-alt me-1"></i>Posts Sociais
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-light" href="/agendamento">
+                        <i class="fas fa-clock me-1"></i>Agendamento
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-light" href="/news">
+                        <i class="fas fa-newspaper me-1"></i>Notícias
+                    </a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link text-light dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-cogs me-1"></i>Ferramentas
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-dark" style="background: rgba(30, 41, 59, 0.95); border: 1px solid rgba(139, 92, 246, 0.3);">
+                        <li><a class="dropdown-item text-light" href="/api/status">
+                            <i class="fas fa-heartbeat me-2"></i>Status da API
+                        </a></li>
+                        <li><a class="dropdown-item text-light" href="/api/health">
+                            <i class="fas fa-check-circle me-2"></i>Health Check
+                        </a></li>
+                        <li><hr class="dropdown-divider border-secondary"></li>
+                        <li><a class="dropdown-item text-light" href="/automation">
+                            <i class="fas fa-robot me-2"></i>Automação
+                        </a></li>
+                        <li><a class="dropdown-item text-light" href="/dashboard">
+                            <i class="fas fa-chart-line me-2"></i>Dashboard
+                        </a></li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-light" href="https://plugpost-ai.lovable.app" target="_blank">
+                        <i class="fas fa-external-link-alt me-1"></i>NewPost-IA
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <span class="nav-link">
+                        <span class="badge badge-gradient me-2">
+                            <i class="fas fa-bolt"></i>Online
+                        </span>
+                    </span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- HERO -->
+<div class="page-hero">
+    <div class="container">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <a href="/" class="btn btn-outline-light btn-sm">
+                    <i class="fas fa-arrow-left me-1"></i>Voltar
+                </a>
+                <div>
+                    <h1><i class="fas fa-broadcast-tower me-2"></i>Posts Sociais</h1>
+                    <p class="text-muted mb-2">Publique automaticamente na <a href="https://plugpost-ai.lovable.app" target="_blank" class="newpost-logo-link">NewPost-IA 🇧🇷</a></p>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <span class="platform-pill"><i class="fas fa-circle text-success" style="font-size:0.5rem"></i> NewPost-IA</span>
+                        <span class="platform-pill"><i class="fas fa-robot"></i> IA Legenda</span>
+                        <span class="platform-pill"><i class="fas fa-audio-description"></i> Áudio Integrado</span>
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-dark-outline" onclick="refreshPosts()" id="btn-refresh">
+                    <i class="fas fa-sync me-1"></i>Atualizar
+                </button>
+                <button class="btn btn-newpost" data-bs-toggle="modal" data-bs-target="#createPostModal">
+                    <i class="fas fa-plus me-1"></i>Novo Post
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- STATS -->
+<div class="container mt-4">
+    <div class="row g-3" id="stats-row">
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <div class="stat-number" id="stat-total">—</div>
+                <div class="stat-label">Total Posts</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <div class="stat-number" id="stat-rascunho">—</div>
+                <div class="stat-label">Rascunhos</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <div class="stat-number" id="stat-aprovado">—</div>
+                <div class="stat-label">Aprovados</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <div class="stat-number" id="stat-publicado">—</div>
+                <div class="stat-label">Publicados</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="d-flex align-items-center justify-content-between mt-4 mb-3 flex-wrap gap-3">
+        <div class="filter-tabs" id="filter-tabs">
+            <button class="filter-btn active" onclick="filterByStatus(null, this)">
+                <i class="fas fa-th-list me-1"></i>Todos
+            </button>
+            <button class="filter-btn" onclick="filterByStatus('rascunho', this)">
+                <i class="fas fa-file me-1"></i>Rascunhos
+            </button>
+            <button class="filter-btn" onclick="filterByStatus('pendente', this)">
+                <i class="fas fa-clock me-1"></i>Pendentes
+            </button>
+            <button class="filter-btn" onclick="filterByStatus('aprovado', this)">
+                <i class="fas fa-check me-1"></i>Aprovados
+            </button>
+            <button class="filter-btn" onclick="filterByStatus('publicado', this)">
+                <i class="fas fa-share-alt me-1"></i>Publicados
+            </button>
+            <button class="filter-btn" onclick="filterByStatus('erro', this)">
+                <i class="fas fa-exclamation-triangle me-1"></i>Erros
+            </button>
+        </div>
+    </div>
+
+    <!-- LISTA DE POSTS -->
+    <div id="posts-loading" class="text-center py-5">
+        <div class="spinner-border text-purple-400" style="color:#7C3AED" role="status"></div>
+        <p class="mt-3 text-muted">Carregando posts sociais...</p>
+    </div>
+    <div id="posts-empty" class="empty-state d-none">
+        <i class="fas fa-share-alt"></i>
+        <h5>Nenhum post encontrado</h5>
+        <p class="text-muted">Crie um novo post ou importe a partir das notícias coletadas.</p>
+        <button class="btn btn-newpost mt-2" data-bs-toggle="modal" data-bs-target="#createPostModal">
+            <i class="fas fa-plus me-1"></i>Criar Primeiro Post
+        </button>
+    </div>
+    <div id="posts-list" class="row g-0"></div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODAL: CRIAR NOVO POST -->
+<!-- ============================================================ -->
+<div class="modal fade" id="createPostModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus-circle me-2 text-purple-400" style="color:#7C3AED"></i>Novo Post Social</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Título do Post *</label>
+                    <input type="text" class="form-control" id="new-title" placeholder="Ex: Flamengo vence no Maracanã...">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Legenda / Texto do Post</label>
+                    <div class="d-flex gap-2 mb-2">
+                        <button type="button" class="btn btn-dark-outline btn-sm" id="btn-ai-caption" onclick="generateAICaption()">
+                            <i class="fas fa-magic me-1"></i>Gerar com IA
+                        </button>
+                        <small class="text-muted align-self-center">← Gemini vai criar uma legenda viral automaticamente</small>
+                    </div>
+                    <textarea class="form-control" id="new-caption" rows="4" placeholder="Digite a legenda ou clique em 'Gerar com IA'..."></textarea>
+                    <small class="text-muted" id="caption-char-count">0 / 280 caracteres</small>
+                </div>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">URL do Áudio (opcional)</label>
+                        <input type="text" class="form-control" id="new-audio-url" placeholder="https://... ou /api/download/...">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">URL da Imagem (opcional)</label>
+                        <input type="text" class="form-control" id="new-image-url" placeholder="https://...">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Hashtags (separadas por vírgula)</label>
+                    <input type="text" class="form-control" id="new-hashtags" placeholder="brasil, noticias, ia, locutores">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Status Inicial</label>
+                    <select class="form-select" id="new-status">
+                        <option value="rascunho">Rascunho</option>
+                        <option value="pendente">Pendente de Aprovação</option>
+                        <option value="aprovado">Aprovado (pronto para publicar)</option>
+                    </select>
+                </div>
+
+                <!-- Preview da legenda AI -->
+                <div id="ai-caption-preview" class="d-none p-3 rounded" style="background:rgba(124,58,237,0.1); border:1px solid rgba(124,58,237,0.3)">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <small class="text-warning"><i class="fas fa-magic me-1"></i>Sugestão gerada por IA:</small>
+                        <button class="btn btn-sm" style="color:#C4B5FD;font-size:0.75rem" onclick="applyAICaption()">✓ Aplicar</button>
+                    </div>
+                    <div id="ai-caption-text" class="small text-muted"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-dark-outline" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-newpost" id="btn-save-post" onclick="saveNewPost()">
+                    <i class="fas fa-save me-1"></i>Salvar Post
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODAL: EDITAR POST -->
+<!-- ============================================================ -->
+<div class="modal fade" id="editPostModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-edit me-2" style="color:#EC4899"></i>Editar Post</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-post-id">
+                <div class="mb-3">
+                    <label class="form-label">Título</label>
+                    <input type="text" class="form-control" id="edit-title">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Legenda</label>
+                    <div class="d-flex gap-2 mb-2">
+                        <button type="button" class="btn btn-dark-outline btn-sm" onclick="generateAICaptionEdit()">
+                            <i class="fas fa-magic me-1"></i>Regerar com IA
+                        </button>
+                    </div>
+                    <textarea class="form-control" id="edit-caption" rows="4"></textarea>
+                </div>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">URL do Áudio</label>
+                        <input type="text" class="form-control" id="edit-audio-url">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">URL da Imagem</label>
+                        <input type="text" class="form-control" id="edit-image-url">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Hashtags</label>
+                    <input type="text" class="form-control" id="edit-hashtags" placeholder="brasil, noticias, ia">
+                </div>
+                <div id="edit-image-preview" class="d-none text-center mb-3">
+                    <img id="edit-img-src" src="" class="img-fluid rounded" style="max-height:160px">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-dark-outline" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-newpost" id="btn-update-post" onclick="updatePost()">
+                    <i class="fas fa-save me-1"></i>Salvar Alterações
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODAL: REJEITAR POST -->
+<!-- ============================================================ -->
+<div class="modal fade" id="rejectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-times-circle me-2" style="color:#EF4444"></i>Rejeitar Post</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="reject-post-id">
+                <div class="mb-3">
+                    <label class="form-label">Motivo da rejeição (opcional)</label>
+                    <textarea class="form-control" id="reject-reason" rows="3" placeholder="Ex: Conteúdo não adequado para a plataforma..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-dark-outline" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger-soft" onclick="confirmReject()">
+                    <i class="fas fa-times me-1"></i>Confirmar Rejeição
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="main-toast" class="toast align-items-center border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body" id="toast-message">Operação realizada com sucesso!</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // ============================================================
+    // ESTADO GLOBAL
+    // ============================================================
+    let allPosts = [];
+    let currentFilter = null;
+    let lastAICaption = null;
+    const createModal = new bootstrap.Modal(document.getElementById('createPostModal'));
+    const editModal   = new bootstrap.Modal(document.getElementById('editPostModal'));
+    const rejectModal = new bootstrap.Modal(document.getElementById('rejectModal'));
+
+    // ============================================================
+    // TOAST
+    // ============================================================
+    function showToast(msg, type = 'success') {
+        const el = document.getElementById('main-toast');
+        el.className = `toast align-items-center border-0 toast-${type}`;
+        document.getElementById('toast-message').textContent = msg;
+        new bootstrap.Toast(el, { delay: 4000 }).show();
+    }
+
+    // ============================================================
+    // STATUS
+    // ============================================================
+    function statusBadge(status) {
+        const labels = {
+            rascunho: 'Rascunho',
+            pendente: 'Pendente',
+            aprovado: 'Aprovado',
+            rejeitado: 'Rejeitado',
+            publicado: 'Publicado',
+            agendado: 'Agendado',
+            erro: 'Erro'
+        };
+        return `<span class="status-badge status-${status}">${labels[status] || status}</span>`;
+    }
+
+    // ============================================================
+    // LISTAR POSTS
+    // ============================================================
+    async function refreshPosts(status = currentFilter) {
+        document.getElementById('posts-loading').classList.remove('d-none');
+        document.getElementById('posts-list').innerHTML = '';
+        document.getElementById('posts-empty').classList.add('d-none');
+
+        let url = '/api/social/posts?limit=100';
+        if (status) url += `&status=${status}`;
+
+        try {
+            const res = await fetch(url);
+            const data = await res.json();
+            document.getElementById('posts-loading').classList.add('d-none');
+
+            if (data.success && data.posts.length > 0) {
+                allPosts = data.posts;
+                renderPosts(data.posts);
+                updateStats(data.posts);
+            } else {
+                allPosts = [];
+                document.getElementById('posts-empty').classList.remove('d-none');
+                updateStats([]);
+            }
+        } catch (e) {
+            document.getElementById('posts-loading').classList.add('d-none');
+            showToast('Erro ao carregar posts: ' + e.message, 'error');
+        }
+    }
+
+    function updateStats(posts) {
+        document.getElementById('stat-total').textContent = posts.length;
+        document.getElementById('stat-rascunho').textContent = posts.filter(p => p.status === 'rascunho').length;
+        document.getElementById('stat-aprovado').textContent = posts.filter(p => p.status === 'aprovado').length;
+        document.getElementById('stat-publicado').textContent = posts.filter(p => p.status === 'publicado').length;
+    }
+
+    function filterByStatus(status, btn) {
+        currentFilter = status;
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        refreshPosts(status);
+    }
+
+    function renderPosts(posts) {
+        const list = document.getElementById('posts-list');
+        list.innerHTML = '';
+        posts.forEach(post => {
+            const col = document.createElement('div');
+            col.className = 'col-12 col-lg-6';
+
+            const hashtags = (post.hashtags || []).slice(0, 5);
+            const hashtagHtml = hashtags.map(h => `<span class="hashtag-chip">#${h}</span>`).join(' ');
+            const date = new Date(post.created_at).toLocaleDateString('pt-BR', { day:'2-digit', month:'short', year:'numeric' });
+            const hasAudio = !!post.audio_url;
+            const hasImage = !!post.image_url;
+            const isApproved = post.status === 'aprovado' || post.status === 'ready';
+            const isPublished = post.status === 'publicado' || post.status === 'published';
+            const isRejected = (post.status === 'rejeitado' || post.status === 'rejected') || (post.metadata && post.metadata.is_rejected);
+
+            col.innerHTML = `
+                <div class="post-card">
+                    ${hasImage ? `<img src="${post.image_url}" class="post-image" alt="Imagem do post" onerror="this.style.display='none'">` : ''}
+                    <div class="post-card-header">
+                        <h6 class="post-title">${escHtml(post.title)}</h6>
+                        ${statusBadge(post.status)}
+                    </div>
+                    <div class="post-caption">${escHtml(post.caption || '(sem legenda)')}</div>
+                    <div class="px-3 pb-2">${hashtagHtml}</div>
+                    <div class="post-meta">
+                        <small class="text-muted">${date}</small>
+                        <div class="d-flex gap-2 align-items-center">
+                            ${hasAudio ? `<span class="audio-indicator"><i class="fas fa-volume-up audio-wave"></i>Áudio</span>` : ''}
+                            ${post.ai_caption_generated ? `<span style="font-size:0.72rem;color:#7C3AED"><i class="fas fa-magic me-1"></i>IA</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="post-actions">
+                        ${!isPublished && !isRejected ? `
+                            <button class="btn btn-dark-outline btn-sm" onclick="openEditModal('${post.id}')">
+                                <i class="fas fa-edit me-1"></i>Editar
+                            </button>
+                        ` : ''}
+                        ${!isApproved && !isPublished && !isRejected ? `
+                            <button class="btn btn-success-soft btn-sm" onclick="approvePost('${post.id}')">
+                                <i class="fas fa-check me-1"></i>Aprovar
+                            </button>
+                        ` : ''}
+                        ${isApproved ? `
+                            <button class="btn btn-publish btn-sm" onclick="publishPost('${post.id}')">
+                                <i class="fas fa-broadcast-tower me-1"></i>Publicar na NewPost-IA
+                            </button>
+                        ` : ''}
+                        ${isPublished ? `
+                            <a href="https://plugpost-ai.lovable.app" target="_blank" class="btn btn-dark-outline btn-sm">
+                                <i class="fas fa-external-link-alt me-1"></i>Ver na NewPost-IA
+                            </a>
+                        ` : ''}
+                        ${!isPublished && !isRejected ? `
+                            <button class="btn btn-danger-soft btn-sm" onclick="openRejectModal('${post.id}')">
+                                <i class="fas fa-times me-1"></i>Rejeitar
+                            </button>
+                        ` : ''}
+                        ${isRejected ? `
+                            <button class="btn btn-danger-soft btn-sm" onclick="deletePost('${post.id}')">
+                                <i class="fas fa-trash me-1"></i>Deletar
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+            list.appendChild(col);
+        });
+    }
+
+    function escHtml(str) {
+        if (!str) return '';
+        return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ============================================================
+    // GERAR LEGENDA IA
+    // ============================================================
+    async function generateAICaption() {
+        const title   = document.getElementById('new-title').value;
+        const caption = document.getElementById('new-caption').value;
+        const btn     = document.getElementById('btn-ai-caption');
+
+        if (!title.trim()) { showToast('Informe o título antes de gerar a legenda!', 'error'); return; }
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading-pulse"></span>Gerando...';
+
+        try {
+            const res = await fetch('/api/social/generate-caption', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, content: caption })
+            });
+            const data = await res.json();
+            if (data.success) {
+                lastAICaption = data;
+                document.getElementById('ai-caption-text').innerHTML = `
+                    <strong>Legenda:</strong> ${escHtml(data.caption)}<br>
+                    <strong>Hashtags:</strong> ${(data.hashtags || []).map(h => '#' + h).join(' ')}<br>
+                    <strong>Título sugerido:</strong> ${escHtml(data.title)}
+                `;
+                document.getElementById('ai-caption-preview').classList.remove('d-none');
+                showToast('Legenda IA gerada com sucesso! ✨');
+            } else {
+                showToast('Erro: ' + data.error, 'error');
+            }
+        } catch (e) {
+            showToast('Erro ao gerar legenda: ' + e.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-magic me-1"></i>Gerar com IA';
+        }
+    }
+
+    async function generateAICaptionEdit() {
+        const title   = document.getElementById('edit-title').value;
+        const caption = document.getElementById('edit-caption').value;
+        if (!title.trim()) { showToast('Informe o título!', 'error'); return; }
+        try {
+            const res = await fetch('/api/social/generate-caption', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, content: caption })
+            });
+            const data = await res.json();
+            if (data.success) {
+                document.getElementById('edit-caption').value = data.caption;
+                if (data.hashtags) {
+                    document.getElementById('edit-hashtags').value = data.hashtags.join(', ');
+                }
+                showToast('Legenda IA aplicada! ✨');
+            }
+        } catch(e) { showToast('Erro: ' + e.message, 'error'); }
+    }
+
+    function applyAICaption() {
+        if (!lastAICaption) return;
+        document.getElementById('new-caption').value = lastAICaption.caption || '';
+        if (lastAICaption.hashtags) {
+            document.getElementById('new-hashtags').value = lastAICaption.hashtags.join(', ');
+        }
+        if (lastAICaption.title) {
+            document.getElementById('new-title').value = lastAICaption.title;
+        }
+        document.getElementById('ai-caption-preview').classList.add('d-none');
+        showToast('Sugestão IA aplicada! 🎯');
+    }
+
+    // ============================================================
+    // CRIAR NOVO POST
+    // ============================================================
+    async function saveNewPost() {
+        const title    = document.getElementById('new-title').value.trim();
+        const caption  = document.getElementById('new-caption').value.trim();
+        const audioUrl = document.getElementById('new-audio-url').value.trim();
+        const imageUrl = document.getElementById('new-image-url').value.trim();
+        const status   = document.getElementById('new-status').value;
+        const rawTags  = document.getElementById('new-hashtags').value;
+        const hashtags = rawTags.split(',').map(h => h.trim().replace('#', '')).filter(Boolean);
+
+        if (!title) { showToast('Título é obrigatório!', 'error'); return; }
+
+        const btn = document.getElementById('btn-save-post');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading-pulse"></span>Salvando...';
+
+        try {
+            const res = await fetch('/api/social/posts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title, caption, audio_url: audioUrl, image_url: imageUrl,
+                    platforms: ['newpost_ia'], hashtags, status,
+                    ai_caption_generated: !!lastAICaption
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                createModal.hide();
+                resetCreateForm();
+                showToast('Post criado com sucesso! 🎉');
+                refreshPosts();
+            } else {
+                showToast('Erro: ' + (data.error || 'Falha ao criar post'), 'error');
+            }
+        } catch (e) {
+            showToast('Erro: ' + e.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-save me-1"></i>Salvar Post';
+        }
+    }
+
+    function resetCreateForm() {
+        ['new-title','new-caption','new-audio-url','new-image-url','new-hashtags'].forEach(id => {
+            document.getElementById(id).value = '';
+        });
+        document.getElementById('new-status').value = 'rascunho';
+        document.getElementById('ai-caption-preview').classList.add('d-none');
+        lastAICaption = null;
+    }
+
+    // ============================================================
+    // EDITAR POST
+    // ============================================================
+    function openEditModal(postId) {
+        const post = allPosts.find(p => p.id === postId);
+        if (!post) return;
+        document.getElementById('edit-post-id').value = post.id;
+        document.getElementById('edit-title').value = post.title || '';
+        document.getElementById('edit-caption').value = post.caption || '';
+        document.getElementById('edit-audio-url').value = post.audio_url || '';
+        document.getElementById('edit-image-url').value = post.image_url || '';
+        document.getElementById('edit-hashtags').value = (post.hashtags || []).join(', ');
+
+        const imgPreview = document.getElementById('edit-image-preview');
+        if (post.image_url) {
+            document.getElementById('edit-img-src').src = post.image_url;
+            imgPreview.classList.remove('d-none');
+        } else {
+            imgPreview.classList.add('d-none');
+        }
+        editModal.show();
+    }
+
+    async function updatePost() {
+        const id       = document.getElementById('edit-post-id').value;
+        const title    = document.getElementById('edit-title').value.trim();
+        const caption  = document.getElementById('edit-caption').value.trim();
+        const audioUrl = document.getElementById('edit-audio-url').value.trim();
+        const imageUrl = document.getElementById('edit-image-url').value.trim();
+        const rawTags  = document.getElementById('edit-hashtags').value;
+        const hashtags = rawTags.split(',').map(h => h.trim().replace('#', '')).filter(Boolean);
+
+        const btn = document.getElementById('btn-update-post');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading-pulse"></span>Salvando...';
+
+        try {
+            const res = await fetch(`/api/social/posts/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, caption, audio_url: audioUrl, image_url: imageUrl, hashtags })
+            });
+            const data = await res.json();
+            if (data.success) {
+                editModal.hide();
+                showToast('Post atualizado! ✅');
+                refreshPosts();
+            } else {
+                showToast('Erro: ' + (data.error || 'Falha ao atualizar'), 'error');
+            }
+        } catch (e) {
+            showToast('Erro: ' + e.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-save me-1"></i>Salvar Alterações';
+        }
+    }
+
+    // ============================================================
+    // APROVAR POST
+    // ============================================================
+    async function approvePost(postId) {
+        try {
+            const res = await fetch(`/api/social/posts/${postId}/approve`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ approved_by: 'gestor' })
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast('Post aprovado! Pronto para publicar. ✅');
+                refreshPosts();
+            } else {
+                showToast('Erro: ' + (data.error || 'Falha'), 'error');
+            }
+        } catch (e) {
+            showToast('Erro: ' + e.message, 'error');
+        }
+    }
+
+    // ============================================================
+    // REJEITAR POST
+    // ============================================================
+    function openRejectModal(postId) {
+        document.getElementById('reject-post-id').value = postId;
+        document.getElementById('reject-reason').value = '';
+        rejectModal.show();
+    }
+
+    async function confirmReject() {
+        const postId = document.getElementById('reject-post-id').value;
+        const reason = document.getElementById('reject-reason').value.trim();
+        try {
+            const res = await fetch(`/api/social/posts/${postId}/reject`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reason, rejected_by: 'gestor' })
+            });
+            const data = await res.json();
+            if (data.success) {
+                rejectModal.hide();
+                showToast('Post rejeitado.', 'error');
+                refreshPosts();
+            }
+        } catch (e) {
+            showToast('Erro: ' + e.message, 'error');
+        }
+    }
+
+    // ============================================================
+    // PUBLICAR NA NEWPOST-IA
+    // ============================================================
+    async function publishPost(postId) {
+        if (!confirm('Publicar este post na NewPost-IA agora?')) return;
+
+        const btn = document.querySelector(`[onclick="publishPost('${postId}')"]`);
+        if (btn) { btn.disabled = true; btn.innerHTML = '<span class="loading-pulse"></span>Publicando...'; }
+
+        try {
+            const res = await fetch(`/api/social/posts/${postId}/publish`, { method: 'POST' });
+            const data = await res.json();
+
+            if (data.success) {
+                showToast('📡 Publicado com sucesso na NewPost-IA! 🎉');
+                setTimeout(() => refreshPosts(), 800);
+            } else {
+                const errMsg = data.publish_results
+                    ? Object.values(data.publish_results).map(r => r.error || '').join('; ')
+                    : (data.error || 'Falha ao publicar');
+                showToast('Erro ao publicar: ' + errMsg, 'error');
+                if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-broadcast-tower me-1"></i>Publicar na NewPost-IA'; }
+            }
+        } catch (e) {
+            showToast('Erro: ' + e.message, 'error');
+            if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-broadcast-tower me-1"></i>Publicar na NewPost-IA'; }
+        }
+    }
+
+    // ============================================================
+    // DELETAR POST
+    // ============================================================
+    async function deletePost(postId) {
+        if (!confirm('Tem certeza que deseja deletar este post? Esta ação não pode ser desfeita.')) return;
+
+        const btn = document.querySelector(`[onclick="deletePost('${postId}')"]`);
+        if (btn) { btn.disabled = true; btn.innerHTML = '<span class="loading-pulse"></span>Deletando...'; }
+
+        try {
+            const res = await fetch(`/api/social/posts/${postId}`, { method: 'DELETE' });
+            const data = await res.json();
+
+            if (data.success) {
+                showToast('🗑️ Post deletado com sucesso!');
+                setTimeout(() => refreshPosts(), 800);
+            } else {
+                showToast('Erro ao deletar: ' + (data.error || 'Falha ao deletar'), 'error');
+                if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-trash me-1"></i>Deletar'; }
+            }
+        } catch (e) {
+            showToast('Erro: ' + e.message, 'error');
+            if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-trash me-1"></i>Deletar'; }
+        }
+    }
+
+    // ============================================================
+    // CONTADOR DE CARACTERES
+    // ============================================================
+    document.getElementById('new-caption').addEventListener('input', function() {
+        const len = this.value.length;
+        const counter = document.getElementById('caption-char-count');
+        counter.textContent = `${len} / 280 caracteres`;
+        counter.style.color = len > 280 ? '#EF4444' : '#64748B';
+    });
+
+    // ============================================================
+    // INIT
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', () => {
+        refreshPosts();
+    });
+</script>
+</body>
+</html>

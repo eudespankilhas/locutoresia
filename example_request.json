@@ -1,0 +1,12 @@
+{
+  "enabled_sources": {
+    "g1": true,
+    "folha": true,
+    "exame": true
+  },
+  "categories": [
+    "brasil",
+    "economia"
+  ],
+  "limit": 20
+}

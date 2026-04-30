@@ -1,0 +1,8 @@
+"""
+Configuração do Supabase para NewPost-IA
+"""
+
+# Novo projeto da NewPost-IA (fornecido pelo usuário)
+SUPABASE_URL = "https://hzmtdfojctctvgqjdbex.supabase.co"
+SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6bXRkZm9qY3RjdHZncWpkYmV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM2NDUwMTIsImV4cCI6MjA3OTIyMTAxMn0.bv_6SFc_vNnw_eIyD73xNsRVXtL0guSbMRNuCthIy4Q"
+SUPABASE_SERVICE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6bXRkZm9qY3RjdHZncWpkYmV4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjY0NTAxMiwiZXhwIjoyMDkyMjIxMDEyfQ.bv_6SFc_vNnw_eIyD73xNsRVXtL0guSbMRNuCthIy4Q"

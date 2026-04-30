@@ -1,0 +1,26 @@
+{
+  "enabled_sources": {
+    "g1": true,
+    "folha": true,
+    "exame": true,
+    "veja": true,
+    "olhar_digital": true,
+    "forbes_brasil": true
+  },
+  "categories": [
+    "brasil",
+    "economia",
+    "tecnologia",
+    "politica"
+  ],
+  "collection_interval_minutes": 5,
+  "max_news_per_collection": 100,
+  "retry_failed_sources": true,
+  "retry_interval_minutes": 30,
+  "cleanup_days": 7,
+  "notifications": {
+    "enabled": false,
+    "email": "",
+    "webhook_url": ""
+  }
+}

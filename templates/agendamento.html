@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendamento Automático - NewPost-IA | Locutores IA</title>
+    <meta name="description" content="Configure a automação de posts para NewPost-IA">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --newpost-purple: #7C3AED;
+            --newpost-pink: #EC4899;
+            --newpost-cyan: #06B6D4;
+            --newpost-dark: #0F0F1A;
+            --newpost-card: #1A1A2E;
+            --newpost-border: rgba(124, 58, 237, 0.3);
+            --gradient-primary: linear-gradient(135deg, #7C3AED 0%, #EC4899 100%);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--newpost-dark);
+            color: #E2E8F0;
+            min-height: 100vh;
+        }
+
+        .page-header {
+            background: linear-gradient(135deg, #581c87 0%, #7C3AED 100%);
+            border-bottom: 1px solid var(--newpost-border);
+            padding: 2rem 0;
+        }
+
+        .card-dark {
+            background: var(--newpost-card);
+            border: 1px solid var(--newpost-border);
+            border-radius: 12px;
+        }
+
+        .btn-purple {
+            background: var(--gradient-primary);
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 12px 24px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .btn-purple:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(124, 58, 237, 0.4);
+            color: white;
+        }
+
+        .btn-purple:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .category-btn {
+            background: #1A1A2E;
+            border: 2px solid #2D2D44;
+            color: #E2E8F0;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: left;
+            transition: all 0.3s;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .category-btn:hover {
+            border-color: var(--newpost-purple);
+        }
+
+        .category-btn.active {
+            background: rgba(124, 58, 237, 0.2);
+            border-color: var(--newpost-purple);
+        }
+
+        .category-btn .check-icon {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #4B5563;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .category-btn.active .check-icon {
+            background: var(--newpost-purple);
+            border-color: var(--newpost-purple);
+        }
+
+        .time-input {
+            background: #1A1A2E;
+            border: 1px solid #2D2D44;
+            color: #E2E8F0;
+            padding: 12px;
+            border-radius: 8px;
+            width: 100%;
+        }
+
+        .time-input:focus {
+            outline: none;
+            border-color: var(--newpost-purple);
+        }
+
+        .info-box {
+            background: rgba(124, 58, 237, 0.1);
+            border: 1px solid var(--newpost-border);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .status-box {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .navbar {
+            background: rgba(15, 15, 26, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--newpost-border);
+        }
+
+        .nav-link {
+            color: #94A3B8 !important;
+            transition: color 0.3s;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: #E2E8F0 !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Menu -->
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top" style="background: rgba(30, 41, 59, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(139, 92, 246, 0.3);">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="/">
+                <div class="p-2 bg-primary/10 rounded-lg">
+                    <i class="fas fa-brain fa-lg text-primary"></i>
+                </div>
+                <div>
+                    <span class="fw-bold text-white">Locutores IA</span>
+                    <div class="small text-secondary">Sistema Multi-Agentes</div>
+                </div>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link text-light" href="/">
+                            <i class="fas fa-home me-1"></i>Início
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-light" href="/ai-dashboard">
+                            <i class="fas fa-brain me-1"></i>Central IA
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-light" href="/social-posts">
+                            <i class="fas fa-share-alt me-1"></i>Posts Sociais
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-light active" href="/agendamento">
+                            <i class="fas fa-clock me-1"></i>Agendamento
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-light" href="/news">
+                            <i class="fas fa-newspaper me-1"></i>Notícias
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link text-light dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-cogs me-1"></i>Ferramentas
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-dark" style="background: rgba(30, 41, 59, 0.95); border: 1px solid rgba(139, 92, 246, 0.3);">
+                            <li><a class="dropdown-item text-light" href="/api/status">
+                                <i class="fas fa-heartbeat me-2"></i>Status da API
+                            </a></li>
+                            <li><a class="dropdown-item text-light" href="/api/health">
+                                <i class="fas fa-check-circle me-2"></i>Health Check
+                            </a></li>
+                            <li><hr class="dropdown-divider border-secondary"></li>
+                            <li><a class="dropdown-item text-light" href="/automation">
+                                <i class="fas fa-robot me-2"></i>Automação
+                            </a></li>
+                            <li><a class="dropdown-item text-light" href="/dashboard">
+                                <i class="fas fa-chart-line me-2"></i>Dashboard
+                            </a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <span class="nav-link">
+                            <span class="badge badge-gradient me-2">
+                                <i class="fas fa-bolt"></i>Online
+                            </span>
+                        </span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header -->
+    <header class="page-header">
+        <div class="container">
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <a href="/" class="btn btn-outline-light btn-sm">
+                    <i class="fas fa-arrow-left me-1"></i>Voltar
+                </a>
+                <div>
+                    <h1 class="display-5 fw-bold text-white mb-1">Agendamento Automático</h1>
+                    <p class="lead text-purple-200 mb-0">Configure a automação de posts para NewPost-IA</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container py-5">
+        <div id="loadingState" class="text-center py-5">
+            <div class="spinner-border text-purple" role="status">
+                <span class="visually-hidden">Carregando...</span>
+            </div>
+            <p class="mt-3 text-muted">Carregando configurações...</p>
+        </div>
+
+        <div id="contentState" style="display: none;">
+            <!-- Info Box -->
+            <div class="info-box mb-4">
+                <div class="d-flex gap-3">
+                    <i class="fas fa-info-circle text-purple fs-4" style="color: var(--newpost-purple);"></i>
+                    <div>
+                        <h5 class="text-white mb-1">Como funciona</h5>
+                        <p class="text-gray-300 mb-0 text-secondary">
+                            A automação rodará nos horários abaixo (7h, 12h e 18h — horário de Brasília),
+                            buscando notícias das categorias selecionadas e inserindo posts automaticamente na tabela <strong>posts</strong>.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Schedule Times -->
+            <div class="card-dark p-4 mb-4">
+                <h5 class="mb-4 text-white"><i class="fas fa-clock me-2" style="color: var(--newpost-purple);"></i>Horários de Publicação (Brasília)</h5>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label text-gray-300">Horário 1</label>
+                        <input type="time" id="time1" class="time-input" value="09:10">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label text-gray-300">Horário 2</label>
+                        <input type="time" id="time2" class="time-input" value="12:00">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label text-gray-300">Horário 3</label>
+                        <input type="time" id="time3" class="time-input" value="18:00">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Posts per Category -->
+            <div class="card-dark p-4 mb-4">
+                <h5 class="mb-3 text-white">Quantidade de Posts por Categoria</h5>
+                <div class="row">
+                    <div class="col-md-4">
+                        <input type="number" id="postsPerCategory" class="time-input" value="1" min="1" max="10">
+                        <p class="text-muted mt-2 small">
+                            Cada horário buscará este número de posts por categoria ativa
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Categories -->
+            <div class="card-dark p-4 mb-4">
+                <h5 class="mb-4 text-white">Categorias Ativas</h5>
+                <div class="row g-3" id="categoriesGrid">
+                    <!-- Categories will be generated by JS -->
+                </div>
+                <p class="text-muted mt-3">
+                    Selecionadas: <span id="selectedCount" class="text-white fw-bold">0</span> categoria(s)
+                </p>
+            </div>
+
+            <!-- Status -->
+            <div class="status-box mb-4">
+                <div class="d-flex align-items-center gap-3">
+                    <i class="fas fa-check-circle text-success fs-4"></i>
+                    <div>
+                        <h5 class="text-white mb-1">Status das Automações</h5>
+                        <p class="text-gray-300 mb-0 text-secondary" id="statusText">
+                            ✅ 7h Brasília — Aguardando configuração<br>
+                            ✅ 12h Brasília — Aguardando configuração<br>
+                            ✅ 18h Brasília — Aguardando configuração
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Save Button -->
+            <button id="saveBtn" class="btn-purple w-100" onclick="saveConfig()">
+                <i class="fas fa-save me-2"></i>Salvar Configuração
+            </button>
+        </div>
+    </main>
+
+    <!-- Toast Notification -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050;">
+        <div id="toast" class="toast align-items-center text-white border-0" role="alert" style="background: var(--newpost-card);">
+            <div class="d-flex">
+                <div class="toast-body" id="toastMessage"></div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Categories list
+        const categories = [
+            'Política', 'Economia', 'Tecnologia', 'Esportes',
+            'Entretenimento', 'Saúde', 'Ciência'
+        ];
+
+        // Config state
+        let config = {
+            id: null,
+            active_categories: [],
+            schedule_time_1: '09:10',
+            schedule_time_2: '12:00',
+            schedule_time_3: '18:00',
+            posts_per_category: 1
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async function() {
+            renderCategories();
+            await loadConfig();
+        });
+
+        // Render categories grid
+        function renderCategories() {
+            const grid = document.getElementById('categoriesGrid');
+            grid.innerHTML = categories.map(category => `
+                <div class="col-md-4 col-lg-3">
+                    <button type="button" class="category-btn ${config.active_categories.includes(category) ? 'active' : ''}" 
+                            onclick="toggleCategory('${category}')">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="check-icon">
+                                ${config.active_categories.includes(category) ? '<i class="fas fa-check text-white small"></i>' : ''}
+                            </div>
+                            <span class="fw-medium">${category}</span>
+                        </div>
+                    </button>
+                </div>
+            `).join('');
+            updateSelectedCount();
+        }
+
+        // Toggle category
+        function toggleCategory(category) {
+            const index = config.active_categories.indexOf(category);
+            if (index > -1) {
+                config.active_categories.splice(index, 1);
+            } else {
+                config.active_categories.push(category);
+            }
+            renderCategories();
+            updateStatusText();
+        }
+
+        // Update selected count
+        function updateSelectedCount() {
+            document.getElementById('selectedCount').textContent = config.active_categories.length;
+        }
+
+        // Update status text
+        function updateStatusText() {
+            const status = config.active_categories.length > 0 ? 'Ativo' : 'Aguardando configuração';
+            document.getElementById('statusText').innerHTML = `
+                ✅ 7h Brasília — ${status}<br>
+                ✅ 12h Brasília — ${status}<br>
+                ✅ 18h Brasília — ${status}
+            `;
+        }
+
+        // Load config from API
+        async function loadConfig() {
+            try {
+                const response = await fetch('/api/automation/config');
+                const data = await response.json();
+                
+                if (data.success && data.config) {
+                    config = { ...config, ...data.config };
+                    
+                    // Update inputs
+                    document.getElementById('time1').value = config.schedule_time_1;
+                    document.getElementById('time2').value = config.schedule_time_2;
+                    document.getElementById('time3').value = config.schedule_time_3;
+                    document.getElementById('postsPerCategory').value = config.posts_per_category;
+                    
+                    renderCategories();
+                    updateStatusText();
+                }
+            } catch (error) {
+                console.error('Erro ao carregar config:', error);
+                showToast('Nenhuma configuração encontrada. Será criada ao salvar.', 'info');
+            } finally {
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('contentState').style.display = 'block';
+            }
+        }
+
+        // Save config
+        async function saveConfig() {
+            if (config.active_categories.length === 0) {
+                showToast('Selecione pelo menos uma categoria!', 'warning');
+                return;
+            }
+
+            const btn = document.getElementById('saveBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Salvando...';
+
+            try {
+                // Get values from inputs
+                const time1 = document.getElementById('time1').value;
+                
+                // Converter HH:MM para HH:MM:SS
+                const time1WithSeconds = time1 + ':00';
+                
+                // Build payload apenas com campos permitidos
+                const payload = {
+                    active_categories: config.active_categories,
+                    schedule_time_1: time1WithSeconds,
+                    enabled: true
+                };
+                
+                // Incluir ID se existir (para UPDATE)
+                if (config.id) {
+                    payload.id = config.id;
+                }
+
+                const response = await fetch('/api/automation/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('✅ Configuração salva com sucesso!', 'success');
+                    if (data.config && data.config.id) {
+                        config.id = data.config.id;
+                    }
+                } else {
+                    throw new Error(data.error || 'Erro ao salvar');
+                }
+            } catch (error) {
+                console.error('Erro ao salvar:', error);
+                showToast('❌ Erro ao salvar: ' + error.message, 'danger');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save me-2"></i>Salvar Configuração';
+            }
+        }
+
+        // Show toast
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            
+            toastMessage.textContent = message;
+            
+            // Set background color based on type
+            if (type === 'success') {
+                toast.style.background = 'rgba(16, 185, 129, 0.9)';
+            } else if (type === 'warning') {
+                toast.style.background = 'rgba(245, 158, 11, 0.9)';
+            } else if (type === 'danger') {
+                toast.style.background = 'rgba(239, 68, 68, 0.9)';
+            } else {
+                toast.style.background = 'var(--newpost-card)';
+            }
+            
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+        }
+    </script>
+</body>
+</html>

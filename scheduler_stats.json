@@ -1,0 +1,48 @@
+{
+  "total_collections": 22,
+  "successful_collections": 22,
+  "failed_collections": 0,
+  "total_news_collected": 1100,
+  "last_collection": "2026-04-27T17:57:07.756670",
+  "start_time": "2026-04-23T17:15:06.413368",
+  "collections_by_hour": {
+    "17:00": 7,
+    "09:00": 1,
+    "10:00": 1,
+    "11:00": 1,
+    "15:00": 6,
+    "16:00": 6
+  },
+  "source_performance": {
+    "g1": {
+      "total_collections": 22,
+      "successful_collections": 22,
+      "total_news": 440
+    },
+    "folha": {
+      "total_collections": 22,
+      "successful_collections": 0,
+      "total_news": 0
+    },
+    "exame": {
+      "total_collections": 22,
+      "successful_collections": 0,
+      "total_news": 0
+    },
+    "veja": {
+      "total_collections": 22,
+      "successful_collections": 0,
+      "total_news": 0
+    },
+    "olhar_digital": {
+      "total_collections": 22,
+      "successful_collections": 22,
+      "total_news": 220
+    },
+    "forbes_brasil": {
+      "total_collections": 22,
+      "successful_collections": 22,
+      "total_news": 440
+    }
+  }
+}

@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News Auto Post - Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #581c87 50%, #0f172a 100%);
+            min-height: 100vh;
+            color: white;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 48px;
+            font-weight: bold;
+            background: linear-gradient(to right, white, #e0e7ff, #c7d2fe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #94a3b8;
+            font-size: 18px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .card {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid #6b21a8;
+            border-radius: 12px;
+            padding: 24px;
+            backdrop-filter: blur(10px);
+        }
+
+        .card h2 {
+            color: white;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .status-running {
+            background: #4ade80;
+            animation: pulse 2s infinite;
+        }
+
+        .status-stopped {
+            background: #64748b;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .button-primary {
+            background: linear-gradient(to right, #16a34a, #059669);
+            color: white;
+        }
+
+        .button-primary:hover {
+            background: linear-gradient(to right, #15803d, #047857);
+        }
+
+        .button-secondary {
+            background: transparent;
+            color: #ef4444;
+            border: 1px solid #991b1b;
+        }
+
+        .button-secondary:hover {
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .button-outline {
+            background: transparent;
+            color: #3b82f6;
+            border: 1px solid #1e40af;
+        }
+
+        .button-outline:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        .source-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: rgba(51, 65, 85, 0.5);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .source-info h3 {
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .source-info p {
+            color: #64748b;
+            font-size: 12px;
+        }
+
+        .switch {
+            position: relative;
+            width: 48px;
+            height: 24px;
+            background: #64748b;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .switch.active {
+            background: #16a34a;
+        }
+
+        .switch-handle {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.2s;
+        }
+
+        .switch.active .switch-handle {
+            transform: translateX(24px);
+        }
+
+        .countdown-box {
+            background: rgba(20, 83, 45, 0.2);
+            border: 1px solid #16a34a;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 16px;
+            text-align: center;
+        }
+
+        .countdown-box p {
+            color: #4ade80;
+            font-size: 14px;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .logs {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 12px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .log-entry {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .log-time {
+            color: #475569;
+            min-width: 80px;
+        }
+
+        .log-success { color: #4ade80; }
+        .log-error { color: #ef4444; }
+        .log-warning { color: #facc15; }
+        .log-info { color: #94a3b8; }
+
+        .preview {
+            background: rgba(20, 83, 45, 0.2);
+            border: 1px solid #16a34a;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .preview h3 {
+            color: #4ade80;
+            margin-bottom: 12px;
+        }
+
+        .preview-title {
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .preview-summary {
+            color: #94a3b8;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        .preview-source {
+            color: #64748b;
+            font-size: 11px;
+            margin-bottom: 12px;
+        }
+
+        .badge {
+            background: rgba(22, 101, 52, 0.2);
+            color: #4ade80;
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+        .info-box {
+            background: rgba(20, 83, 45, 0.2);
+            border: 1px solid #16a34a;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 24px;
+        }
+
+        .info-box h3 {
+            color: #4ade80;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .info-box p {
+            color: #94a3b8;
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+
+        .clear-logs {
+            background: transparent;
+            color: #64748b;
+            border: none;
+            font-size: 12px;
+            cursor: pointer;
+            margin-top: 12px;
+        }
+
+        .clear-logs:hover {
+            color: #94a3b8;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 32px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>News Auto Post</h1>
+            <p>Agente de Automação de Notícias - NewPost-IA Integration</p>
+        </div>
+
+        <div class="grid">
+            <!-- Painel de Controle -->
+            <div>
+                <div class="card">
+                    <h2>
+                        <span class="status-indicator" id="statusIndicator"></span>
+                        Status da Automação
+                    </h2>
+                    
+                    <div id="statusText" style="margin-bottom: 16px;">
+                        <span id="statusLabel" style="color: #94a3b8; font-size: 14px;">Aguardando...</span>
+                    </div>
+
+                    <div class="button-group">
+                        <button id="startBtn" class="button button-primary" onclick="startAutomation()">
+                            ▶ Iniciar
+                        </button>
+                        <button id="stopBtn" class="button button-secondary" onclick="stopAutomation()" style="display: none;">
+                            ⏸ Pausar
+                        </button>
+                        <button id="executeBtn" class="button button-outline" onclick="executeNow(true)">
+                            ⚡ Buscar Agora
+                        </button>
+                    </div>
+
+                    <div class="countdown-box">
+                        <p id="countdown">Aguardando início...</p>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 24px;">
+                    <h2>📰 Fontes de Notícias</h2>
+                    
+                    <div class="source-item">
+                        <div class="source-info">
+                            <h3>Exame</h3>
+                            <p>https://exame.com/</p>
+                        </div>
+                        <div class="switch active" data-source="exame" onclick="toggleSource(event)">
+                            <div class="switch-handle"></div>
+                        </div>
+                    </div>
+
+                    <div class="source-item">
+                        <div class="source-info">
+                            <h3>Folha de S.Paulo</h3>
+                            <p>https://www.folha.uol.com.br/</p>
+                        </div>
+                        <div class="switch active" data-source="folha" onclick="toggleSource(event)">
+                            <div class="switch-handle"></div>
+                        </div>
+                    </div>
+
+                    <div class="source-item">
+                        <div class="source-info">
+                            <h3>Veja</h3>
+                            <p>https://veja.abril.com.br/</p>
+                        </div>
+                        <div class="switch active" data-source="veja" onclick="toggleSource(event)">
+                            <div class="switch-handle"></div>
+                        </div>
+                    </div>
+
+                    <div class="source-item">
+                        <div class="source-info">
+                            <h3>O Globo</h3>
+                            <p>https://oglobo.globo.com/</p>
+                        </div>
+                        <div class="switch active" data-source="oglobo" onclick="toggleSource(event)">
+                            <div class="switch-handle"></div>
+                        </div>
+                    </div>
+
+                    <div class="source-item">
+                        <div class="source-info">
+                            <h3>Diário do Nordeste</h3>
+                            <p>https://diariodonordeste.verdesmares.com.br/</p>
+                        </div>
+                        <div class="switch active" data-source="diario_nordeste" onclick="toggleSource(event)">
+                            <div class="switch-handle"></div>
+                        </div>
+                    </div>
+
+                    <div class="source-item">
+                        <div class="source-info">
+                            <h3>Forbes Brasil</h3>
+                            <p>https://forbes.com.br/</p>
+                        </div>
+                        <div class="switch active" data-source="forbes_brasil" onclick="toggleSource(event)">
+                            <div class="switch-handle"></div>
+                        </div>
+                    </div>
+
+                    <div class="source-item">
+                        <div class="source-info">
+                            <h3>Gazeta do Povo</h3>
+                            <p>https://www.gazetadopovo.com.br/</p>
+                        </div>
+                        <div class="switch active" data-source="gazeta_do_povo" onclick="toggleSource(event)">
+                            <div class="switch-handle"></div>
+                        </div>
+                    </div>
+
+                    <div class="source-item">
+                        <div class="source-info">
+                            <h3>O Globo</h3>
+                            <p>https://oglobo.globo.com/</p>
+                        </div>
+                        <div class="switch active" data-source="oglobo" onclick="toggleSource(event)">
+                            <div class="switch-handle"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Logs e Preview -->
+            <div>
+                <div id="preview" class="preview" style="display: none;">
+                    <h3>📥 Última Notícia Coletada — Aguardando Curadoria</h3>
+                    <div id="previewSource" class="preview-source"></div>
+                    <div id="previewTitle" class="preview-title"></div>
+                    <div id="previewSummary" class="preview-summary"></div>
+                    <a href="/social-posts" class="badge" style="background: rgba(245,158,11,0.2); color: #f59e0b; text-decoration: none; cursor: pointer; display: inline-block;">⏳ Rascunho — Clique aqui para editar e publicar</a>
+                </div>
+
+                <div class="card">
+                    <h2>📋 Logs de Execução</h2>
+                    
+                    <div id="logs" class="logs">
+                        <div style="color: #64748b; text-align: center; padding: 32px; font-style: italic;">
+                            Aguardando primeira execução...
+                        </div>
+                    </div>
+
+                    <button class="clear-logs" onclick="clearLogs()">🗑️ Limpar logs</button>
+                </div>
+
+                <div class="card" style="margin-top: 24px;">
+                    <h2>📊 Publicações Salvas</h2>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <span style="color: #94a3b8; font-size: 14px;">Total: <span id="totalPublications" style="color: #4ade80; font-weight: bold; font-size: 16px;">0</span></span>
+                        <div style="display: flex; gap: 8px;">
+                            <button onclick="loadPublications()" class="button button-outline" style="padding: 8px 16px; font-size: 12px; background-color: #3b82f6; border-color: #3b82f6; color: white;">
+                                🔄 Atualizar
+                            </button>
+                            <button onclick="clearPublications()" class="button button-outline" style="padding: 8px 16px; font-size: 12px; background-color: #ef4444; border-color: #ef4444; color: white;">
+                                🗑️ Limpar
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="publicationsList" style="max-height: 300px; overflow-y: auto;">
+                        <div style="color: #64748b; text-align: center; padding: 32px; font-style: italic;">
+                            Nenhuma publicação ainda...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <h3>ℹ️ Configuração do Sistema</h3>
+                    <p><strong>Intervalo:</strong> 10 minutos entre buscas</p>
+                    <p><strong>Rede:</strong> NewPost-IA</p>
+                    <p><strong>Fontes:</strong> 7 portais de notícias brasileiros</p>
+                    <p><strong>Status:</strong> <span id="systemStatus" style="color: #ef4444;">Desligado</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Use root-relative API paths so the page works correctly when served from the backend.
+        // Fallback to empty string if origin is unavailable (e.g. file:// pages).
+        const API_BASE = window.location.origin && window.location.origin !== 'null'
+            ? window.location.origin
+            : '';
+        let isRunning = false;
+        let logs = [];
+        let publishedTitles = new Set(); // Deduplicação: evita publicar a mesma notícia
+        let enabledSources = {
+            exame: true,
+            veja: true,
+            folha: true,
+            oglobo: true,
+            diario_nordeste: true,
+            forbes_brasil: true,
+            gazeta_povo: true
+        };
+        let automationInterval = null;
+        let nextExecutionTime = null;
+        const INTERVAL_MINUTES = 10; // Intervalo de 10 minutos
+
+        function addLog(message, type = 'info') {
+            const time = new Date().toLocaleTimeString('pt-BR');
+            logs.push({ message, type, time });
+            updateLogsDisplay();
+            console.log(`[${time}] [${type.toUpperCase()}] ${message}`);
+        }
+
+        function updateLogsDisplay() {
+            const logsContainer = document.getElementById('logs');
+            if (logs.length === 0) {
+                logsContainer.innerHTML = '<div style="color: #64748b; text-align: center; padding: 32px; font-style: italic;">Aguardando primeira execução...</div>';
+                return;
+            }
+
+            logsContainer.innerHTML = logs.map(log => `
+                <div class="log-entry">
+                    <span class="log-time">[${log.time}]</span>
+                    <span class="log-${log.type}">${log.message}</span>
+                </div>
+            `).join('');
+            
+            logsContainer.scrollTop = logsContainer.scrollHeight;
+        }
+
+        function updateStatus(running) {
+            isRunning = running;
+            const indicator = document.getElementById('statusIndicator');
+            const label = document.getElementById('statusLabel');
+            const startBtn = document.getElementById('startBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const systemStatus = document.getElementById('systemStatus');
+
+            if (running) {
+                indicator.className = 'status-indicator status-running';
+                label.textContent = 'Ativo - Buscando a cada 10 minutos';
+                label.style.color = '#4ade80';
+                startBtn.style.display = 'none';
+                stopBtn.style.display = 'block';
+                systemStatus.textContent = 'Ativo ✓';
+                systemStatus.style.color = '#4ade80';
+            } else {
+                indicator.className = 'status-indicator status-stopped';
+                label.textContent = 'Desligado';
+                label.style.color = '#94a3b8';
+                startBtn.style.display = 'block';
+                stopBtn.style.display = 'none';
+                systemStatus.textContent = 'Desligado';
+                systemStatus.style.color = '#ef4444';
+            }
+        }
+
+        function toggleSource(event) {
+            const switchElement = event.currentTarget;
+            const sourceId = switchElement.getAttribute('data-source');
+            enabledSources[sourceId] = !enabledSources[sourceId];
+            switchElement.classList.toggle('active');
+            
+            const count = Object.values(enabledSources).filter(Boolean).length;
+            addLog(`Fonte ${sourceId} ${enabledSources[sourceId] ? 'ativada' : 'desativada'}. Total: ${count} fontes ativas`, 'info');
+        }
+
+        function updateCountdownDisplay() {
+            const countdownElement = document.getElementById('countdown');
+            if (!isRunning) {
+                countdownElement.textContent = 'Aguardando início...';
+                return;
+            }
+
+            const now = new Date();
+            if (nextExecutionTime) {
+                const diff = nextExecutionTime - now;
+                
+                if (diff > 0) {
+                    const minutes = Math.floor(diff / 60000);
+                    const seconds = Math.floor((diff % 60000) / 1000);
+                    countdownElement.textContent = `⏱️ Próxima busca em: ${minutes}m ${seconds}s`;
+                } else {
+                    countdownElement.textContent = '🔄 Executando agora...';
+                }
+            }
+        }
+
+        function scheduleNextExecution() {
+            nextExecutionTime = new Date(Date.now() + INTERVAL_MINUTES * 60 * 1000);
+            addLog(`Próxima execução agendada para ${nextExecutionTime.toLocaleTimeString('pt-BR')}`, 'info');
+        }
+
+        async function startAutomation() {
+            try {
+                updateStatus(true);
+                addLog('✅ Automação iniciada com sucesso!', 'success');
+                addLog(`⚙️ Intervalo configurado: a cada ${INTERVAL_MINUTES} minutos`, 'info');
+                addLog(`📡 Fontes ativas: ${Object.values(enabledSources).filter(Boolean).length}/7`, 'info');
+                
+                scheduleNextExecution();
+                
+                // Atualizar countdown a cada segundo
+                const countdownInterval = setInterval(() => {
+                    updateCountdownDisplay();
+                }, 1000);
+                
+                // Armazenar intervalo para poder limpar depois
+                window.countdownInterval = countdownInterval;
+                
+                // Executar primeira busca imediatamente
+                setTimeout(() => {
+                    executeAutomation();
+                }, 2000);
+                
+                // Configurar execuções periódicas
+                if (automationInterval) {
+                    clearInterval(automationInterval);
+                }
+                
+                automationInterval = setInterval(() => {
+                    if (isRunning) {
+                        executeAutomation();
+                    }
+                }, INTERVAL_MINUTES * 60 * 1000);
+                
+                window.automationInterval = automationInterval;
+                
+            } catch (error) {
+                addLog(`❌ Erro ao iniciar: ${error.message}`, 'error');
+                updateStatus(false);
+            }
+        }
+
+        async function executeAutomation() {
+            scheduleNextExecution();
+            await executeNow(false); // Não limpar cache na automação
+        }
+
+        async function stopAutomation() {
+            try {
+                isRunning = false;
+                
+                if (window.automationInterval) {
+                    clearInterval(window.automationInterval);
+                    window.automationInterval = null;
+                }
+                
+                if (window.countdownInterval) {
+                    clearInterval(window.countdownInterval);
+                    window.countdownInterval = null;
+                }
+                
+                updateStatus(false);
+                addLog('⏸️ Automação pausada', 'warning');
+                document.getElementById('countdown').textContent = 'Aguardando início...';
+                
+            } catch (error) {
+                addLog(`❌ Erro ao parar: ${error.message}`, 'error');
+            }
+        }
+
+        async function executeNow(clearCache = false) {
+            const executeBtn = document.getElementById('executeBtn');
+            const wasDisabled = executeBtn.disabled;
+            executeBtn.disabled = true;
+            executeBtn.textContent = '⏳ Buscando...';
+
+            try {
+                // Limpar cache se solicitado (busca manual)
+                if (clearCache) {
+                    const cacheSize = publishedTitles.size;
+                    publishedTitles.clear();
+                    if (cacheSize > 0) {
+                        addLog(`🔄 Cache limpo (${cacheSize} títulos)`, 'info');
+                    }
+                }
+                
+                addLog('🔍 Iniciando busca de notícias...', 'info');
+
+                const enabledSourcesList = Object.keys(enabledSources).filter(key => enabledSources[key]);
+                
+                if (enabledSourcesList.length === 0) {
+                    addLog('⚠️ Nenhuma fonte ativa! Ative pelo menos uma fonte.', 'warning');
+                    return;
+                }
+
+                addLog(`📡 Buscando em ${enabledSourcesList.length} fonte(s)...`, 'info');
+
+                const response = await fetch(`${API_BASE}/api/news/execute`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        enabled_sources: enabledSources,
+                        sources_list: enabledSourcesList
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Processar TODAS as notícias retornadas
+                    const newsArray = result.news || [];
+                    addLog(`📰 ${newsArray.length} notícia(s) encontrada(s)`, 'success');
+                    
+                    let savedCount = 0;
+                    let duplicateCount = 0;
+                    
+                    for (const newsItem of newsArray) {
+                        const newsTitle = newsItem.title || '';
+                        
+                        // ── VALIDAÇÃO: pular notícias sem título ─────────────
+                        if (!newsTitle || newsTitle.trim() === '') {
+                            addLog(`⚠️ Notícia sem título, pulando...`, 'warning');
+                            continue;
+                        }
+                        // ─────────────────────────────────────────────────────
+                        
+                        // ── DEDUPLICAÇÃO ─────────────────────────────────────
+                        if (publishedTitles.has(newsTitle)) {
+                            addLog(`⚠️ Notícia já processada: "${newsTitle.substring(0, 50)}..."`, 'warning');
+                            duplicateCount++;
+                            continue;
+                        }
+                        publishedTitles.add(newsTitle);
+                        // ─────────────────────────────────────────────────────
+
+                        addLog(`📰 Notícia: "${newsTitle.substring(0, 60)}"`, 'info');
+                        addLog(`🏢 Fonte: ${newsItem.source || 'Desconhecida'}`, 'info');
+
+                        // ── SALVAR COMO RASCUNHO para curadoria humana ───────
+                        try {
+                            const draftResp = await fetch(`${API_BASE}/api/social/posts`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    title: newsTitle,
+                                    caption: newsItem.summary || '',
+                                    hashtags: ['noticia', 'brasil'],
+                                    platforms: ['newpost_ia'],
+                                    status: 'rascunho',
+                                    source_url: newsItem.url || ''
+                                })
+                            });
+                            if (draftResp.ok) {
+                                savedCount++;
+                                addLog(`✅ Rascunho salvo: "${newsTitle.substring(0, 40)}..."`, 'success');
+                            } else {
+                                addLog(`⚠️ Erro ao salvar: "${newsTitle.substring(0, 40)}..."`, 'warning');
+                            }
+                        } catch(e) {
+                            addLog(`⚠️ Erro ao salvar rascunho: ${e.message}`, 'warning');
+                        }
+                        // ─────────────────────────────────────────────────────
+                    }
+                    
+                    addLog(`📊 Resumo: ${savedCount} nova(s) salva(s), ${duplicateCount} duplicada(s)`, 'info');
+                    if (savedCount > 0) {
+                        addLog('👉 Acesse /social-posts para Editar → Aprovar → Postar', 'info');
+                        loadPublications(); // Recarregar lista
+                    }
+                    
+                    // Mostrar preview da primeira notícia
+                    if (newsArray.length > 0) {
+                        showPreview(newsArray[0]);
+                    }
+
+                } else {
+                    const errorMsg = result.error || 'Erro desconhecido';
+                    addLog(`❌ Erro ao buscar notícia: ${errorMsg}`, 'error');
+                }
+            } catch (error) {
+                addLog(`❌ Erro na execução: ${error.message}`, 'error');
+            } finally {
+                executeBtn.disabled = wasDisabled;
+                executeBtn.textContent = '⚡ Buscar Agora';
+            }
+        }
+
+        async function publishToNewPostIA(data) {
+            try {
+                addLog(`🚀 Publicando em NewPost-IA...`, 'info');
+                
+                const response = await fetch(`${API_BASE}/api/newpost/publish`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.error || 'Erro ao publicar');
+                }
+
+                return result;
+            } catch (error) {
+                addLog(`⚠️ Erro ao publicar em NewPost-IA: ${error.message}`, 'error');
+                throw error;
+            }
+        }
+
+        function showPreview(news) {
+            const preview = document.getElementById('preview');
+            const title = document.getElementById('previewTitle');
+            const summary = document.getElementById('previewSummary');
+            const source = document.getElementById('previewSource');
+
+            preview.style.display = 'block';
+            title.textContent = news.title;
+            summary.textContent = news.summary;
+            source.textContent = `Fonte: ${news.source || 'Desconhecida'}`;
+        }
+
+        async function loadPublications() {
+            try {
+                const response = await fetch(`${API_BASE}/api/publications`);
+                const data = await response.json();
+                
+                const publicationsList = document.getElementById('publicationsList');
+                const totalPublications = document.getElementById('totalPublications');
+                
+                totalPublications.textContent = data.total;
+                
+                // Log para debug
+                console.log('[DEBUG] Publications data:', data);
+                
+                if (!data.publications || data.publications.length === 0) {
+                    publicationsList.innerHTML = `
+                        <div style="color: #64748b; text-align: center; padding: 32px; font-style: italic;">
+                            Nenhuma publicação ainda...<br>
+                            <small>Clique em "Buscar Agora" para coletar notícias</small>
+                        </div>
+                    `;
+                } else {
+                    const sortedPublications = data.publications.sort((a, b) => 
+                        new Date(b.created_at || b.published_at || Date.now()) - 
+                        new Date(a.created_at || a.published_at || Date.now())
+                    );
+                    
+                    publicationsList.innerHTML = sortedPublications.map(pub => {
+                        // Log cada publicação para debug
+                        console.log('[DEBUG] Pub:', pub.id, 'title:', pub.title?.substring(0, 30));
+                        
+                        return `
+                        <div id="pub-${pub.id}" style="background: #334155; border-radius: 8px; padding: 12px; margin-bottom: 8px; border-left: 3px solid #4ade80;">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                                <span style="color: #4ade80; font-size: 12px; font-weight: bold;">ID: ${pub.id || 'N/A'}</span>
+                                <span style="color: #64748b; font-size: 11px;">${new Date(pub.created_at || pub.published_at || Date.now()).toLocaleString('pt-BR')}</span>
+                            </div>
+                            <div style="color: #94a3b8; font-size: 11px; margin-bottom: 8px;">
+                                Fonte: ${pub.source_url ? new URL(pub.source_url).hostname : 'Desconhecida'}
+                            </div>
+                            <div id="title-${pub.id}" style="color: white; font-size: 13px; margin-bottom: 8px; line-height: 1.4; font-weight: bold;">
+                                ${pub.title || 'Sem título'}
+                            </div>
+                            <div id="content-${pub.id}" style="color: #cbd5e1; font-size: 12px; margin-bottom: 8px; line-height: 1.4; max-height: 100px; overflow-y: auto;">
+                                ${pub.content ? pub.content.substring(0, 200) + '...' : 'Sem conteúdo'}
+                            </div>
+                            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px;">
+                                <span style="background: #14532d; color: #4ade80; font-size: 10px; padding: 2px 6px; border-radius: 4px;">
+                                    ${pub.status || 'draft'}
+                                </span>
+                                ${pub.image_url ? '<span style="background: #1e3a5f; color: #60a5fa; font-size: 10px; padding: 2px 6px; border-radius: 4px;">🖼️ Imagem</span>' : ''}
+                            </div>
+                            <!-- BOTÕES DE AÇÃO -->
+                            <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; padding-top: 10px; border-top: 1px solid #475569;">
+                                <button onclick="editPublication('${pub.id}', '${encodeURIComponent(pub.title || '')}', '${encodeURIComponent(pub.content || '')}')" 
+                                    style="background: #3b82f6; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                    ✏️ Editar
+                                </button>
+                                <button onclick="approvePublication('${pub.id}')" 
+                                    style="background: #f59e0b; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                    ✓ Aprovar
+                                </button>
+                                <button onclick="postToNewPostIA('${pub.id}', '${encodeURIComponent(pub.title || '')}', '${encodeURIComponent(pub.content || '')}', '${pub.image_url || ''}')" 
+                                    style="background: #8b5cf6; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                    🚀 Postar
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    }).join('');
+                }
+                
+            } catch (error) {
+                addLog(`❌ Erro ao carregar publicações: ${error.message}`, 'error');
+            }
+        }
+
+        function clearLogs() {
+            logs = [];
+            updateLogsDisplay();
+            addLog('🗑️ Logs limpos', 'info');
+        }
+
+        async function clearPublications() {
+            if (!confirm('⚠️ Tem certeza que deseja limpar TODAS as publicações? Esta ação não pode ser desfeita.')) {
+                return;
+            }
+
+            try {
+                addLog('🗑️ Limpando publicações...', 'info');
+                
+                const response = await fetch(`${API_BASE}/api/publications`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    addLog('✅ Publicações limpas com sucesso', 'success');
+                    // Limpar também o cache de deduplicação
+                    publishedTitles.clear();
+                    addLog('🔄 Cache de títulos limpo', 'info');
+                    loadPublications(); // Recarregar lista vazia
+                } else {
+                    throw new Error(data.error || 'Erro ao limpar publicações');
+                }
+            } catch (error) {
+                addLog(`❌ Erro ao limpar publicações: ${error.message}`, 'error');
+            }
+        }
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            addLog('✅ Sistema carregado com sucesso', 'success');
+            addLog('🔗 Pronto para conectar com NewPost-IA', 'info');
+            addLog('⏳ Clique em "Iniciar" para começar as buscas automáticas', 'info');
+            updateStatus(false);
+            loadPublications();
+        });
+
+        // ===== FUNÇÕES DE AÇÃO PARA PUBLICAÇÕES =====
+        
+        function editPublication(id, encodedTitle, encodedContent) {
+            const title = decodeURIComponent(encodedTitle);
+            const content = decodeURIComponent(encodedContent);
+            
+            // Criar modal de edição
+            const modal = document.createElement('div');
+            modal.id = 'edit-modal';
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000;';
+            modal.innerHTML = `
+                <div style="background: #1e293b; padding: 24px; border-radius: 12px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;">
+                    <h3 style="color: white; margin-bottom: 16px;">✏️ Editar Publicação</h3>
+                    <div style="margin-bottom: 12px;">
+                        <label style="color: #94a3b8; font-size: 12px; display: block; margin-bottom: 4px;">Título</label>
+                        <input type="text" id="edit-title" value="${title.replace(/"/g, '&quot;')}" style="width: 100%; padding: 8px; background: #334155; border: 1px solid #475569; border-radius: 4px; color: white; font-size: 13px;">
+                    </div>
+                    <div style="margin-bottom: 16px;">
+                        <label style="color: #94a3b8; font-size: 12px; display: block; margin-bottom: 4px;">Conteúdo</label>
+                        <textarea id="edit-content" rows="6" style="width: 100%; padding: 8px; background: #334155; border: 1px solid #475569; border-radius: 4px; color: white; font-size: 13px; resize: vertical;">${content}</textarea>
+                    </div>
+                    <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                        <button onclick="closeEditModal()" style="background: #64748b; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Cancelar</button>
+                        <button onclick="saveEdit('${id}')" style="background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">💾 Salvar</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            addLog(`✏️ Editando publicação ${id}`, 'info');
+        }
+        
+        function closeEditModal() {
+            const modal = document.getElementById('edit-modal');
+            if (modal) modal.remove();
+        }
+        
+        async function saveEdit(id) {
+            const title = document.getElementById('edit-title').value;
+            const content = document.getElementById('edit-content').value;
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/publications/${id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, content })
+                });
+                
+                if (response.ok) {
+                    addLog(`✅ Publicação ${id} atualizada!`, 'success');
+                    closeEditModal();
+                    loadPublications();
+                } else {
+                    throw new Error('Erro ao atualizar');
+                }
+            } catch (error) {
+                addLog(`❌ Erro ao salvar: ${error.message}`, 'error');
+            }
+        }
+        
+        async function approvePublication(id) {
+            try {
+                const response = await fetch(`${API_BASE}/api/publications/${id}/approve`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (response.ok) {
+                    addLog(`✓ Publicação ${id} aprovada!`, 'success');
+                    loadPublications();
+                } else {
+                    throw new Error('Erro ao aprovar');
+                }
+            } catch (error) {
+                addLog(`❌ Erro: ${error.message}`, 'error');
+            }
+        }
+        
+        async function postToNewPostIA(id, encodedTitle, encodedContent, imageUrl) {
+            const title = decodeURIComponent(encodedTitle);
+            const content = decodeURIComponent(encodedContent);
+            
+            try {
+                addLog(`🚀 Postando ${id} na NewPost-IA...`, 'info');
+                
+                const response = await fetch(`${API_BASE}/api/newpost/publish`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: title,
+                        content: content,
+                        image_url: imageUrl,
+                        hashtags: ['notícia', 'Brasil'],
+                        source_id: id
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    addLog(`✅ Postado com sucesso! ID: ${result.post_id}`, 'success');
+                    await approvePublication(id);
+                } else {
+                    throw new Error(result.error || 'Erro ao publicar');
+                }
+            } catch (error) {
+                addLog(`❌ Erro ao postar: ${error.message}`, 'error');
+            }
+        }
+
+        // Atualizar countdown se estiver rodando
+        setInterval(() => {
+            if (isRunning) {
+                updateCountdownDisplay();
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

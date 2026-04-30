@@ -5,37 +5,180 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notícias - Locutores IA</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --newpost-purple: #8b5cf6;
+            --newpost-pink: #ec4899;
+            --newpost-gradient: linear-gradient(135deg, var(--newpost-purple), var(--newpost-pink));
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            min-height: 100vh;
+            color: #f1f5f9;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .text-white {
+            color: #ffffff !important;
+            font-weight: 500;
+        }
+
+        .text-muted {
+            color: #cbd5e1 !important;
+            font-weight: 400;
+        }
+
+        .card-dark {
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+        }
+
+        .news-card {
+            background: rgba(51, 65, 85, 0.8);
+            border: 1px solid rgba(139, 92, 246, 0.4);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .news-card:hover {
+            background: rgba(51, 65, 85, 0.9);
+            border-color: rgba(139, 92, 246, 0.6);
+            transform: translateY(-2px);
+        }
+
+        .news-title {
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+
+        .news-description {
+            color: #e2e8f0;
+            font-weight: 400;
+            line-height: 1.6;
+        }
+
+        .news-meta {
+            color: #cbd5e1;
+            font-size: 0.9rem;
+            font-weight: 400;
+        }
+
+        .btn-gradient {
+            background: var(--newpost-gradient);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+            color: white;
+        }
+
+        .nav-link {
+            color: #f1f5f9 !important;
+            font-weight: 500;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: #ffffff !important;
+        }
+
+        .badge-gradient {
+            background: var(--newpost-gradient);
+            color: white;
+            border: none;
+        }
+    </style>
 </head>
 <body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
+    <!-- Navigation Menu -->
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top" style="background: rgba(30, 41, 59, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(139, 92, 246, 0.3);">
         <div class="container">
-            <a class="navbar-brand" href="/">
-                <i class="fas fa-microphone-alt me-2"></i>Locutores IA
+            <a class="navbar-brand d-flex align-items-center gap-2" href="/">
+                <div class="p-2 bg-primary/10 rounded-lg">
+                    <i class="fas fa-brain fa-lg text-primary"></i>
+                </div>
+                <div>
+                    <span class="fw-bold text-white">Locutores IA</span>
+                    <div class="small text-secondary">Sistema Multi-Agentes</div>
+                </div>
             </a>
+            
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
+            
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="/"><i class="fas fa-home me-1"></i>Início</a>
+                        <a class="nav-link" href="/">
+                            <i class="fas fa-home me-1"></i>Início
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/busca"><i class="fas fa-search me-1"></i>Busca</a>
+                        <a class="nav-link" href="/ai-dashboard">
+                            <i class="fas fa-brain me-1"></i>Central IA
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link active" href="/noticias"><i class="fas fa-newspaper me-1"></i>Notícias</a>
+                        <a class="nav-link" href="/social-posts">
+                            <i class="fas fa-share-alt me-1"></i>Posts Sociais
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/minidaw" target="_blank"><i class="fas fa-music me-1"></i>MiniDAW</a>
+                        <a class="nav-link" href="/agendamento">
+                            <i class="fas fa-clock me-1"></i>Agendamento
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/painel"><i class="fas fa-tachometer-alt me-1"></i>Painel</a>
+                        <a class="nav-link active" href="/news">
+                            <i class="fas fa-newspaper me-1"></i>Notícias
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-cogs me-1"></i>Ferramentas
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-dark" style="background: rgba(30, 41, 59, 0.95); border: 1px solid rgba(139, 92, 246, 0.3);">
+                            <li><a class="dropdown-item text-light" href="/api/status">
+                                <i class="fas fa-heartbeat me-2"></i>Status da API
+                            </a></li>
+                            <li><a class="dropdown-item text-light" href="/api/health">
+                                <i class="fas fa-check-circle me-2"></i>Health Check
+                            </a></li>
+                            <li><hr class="dropdown-divider border-secondary"></li>
+                            <li><a class="dropdown-item text-light" href="/automation">
+                                <i class="fas fa-robot me-2"></i>Automação
+                            </a></li>
+                            <li><a class="dropdown-item text-light" href="/dashboard">
+                                <i class="fas fa-chart-line me-2"></i>Dashboard
+                            </a></li>
+                        </ul>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="/busca">
+                            <i class="fas fa-search me-1"></i>Busca
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <span class="nav-link">
+                            <span class="badge badge-gradient me-2">
+                                <i class="fas fa-bolt"></i>Online
+                            </span>
+                        </span>
                         <a class="nav-link" href="/contato"><i class="fas fa-envelope me-1"></i>Contato</a>
                     </li>
                 </ul>
@@ -44,11 +187,57 @@
     </nav>
 
     <!-- Conteúdo -->
-    <div class="container mt-5">
-        <div class="row">
+    <div class="container-fluid py-4">
+        <!-- Header -->
+        <div class="row mb-4">
             <div class="col-12">
-                <h1><i class="fas fa-newspaper me-2"></i>Notícias</h1>
-                <p class="lead">Fique por dentro das últimas novidades em tecnologia de voz IA</p>
+                <div class="card card-dark">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-3">
+                                <a href="/" class="btn btn-outline-light btn-sm">
+                                    <i class="fas fa-arrow-left me-1"></i>Voltar
+                                </a>
+                                <div class="p-2 bg-primary/10 rounded-lg">
+                                    <i class="fas fa-newspaper fa-2x text-primary"></i>
+                                </div>
+                                <div>
+                                    <h1 class="h3 mb-1 text-white">Notícias Coletadas</h1>
+                                    <p class="text-secondary mb-0">Notícias coletadas automaticamente pelo agente de IA</p>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <span class="badge badge-gradient">
+                                    <i class="fas fa-robot me-1"></i>IA Powered
+                                </span>
+                                <button class="btn btn-outline-light btn-sm" onclick="loadCollectedNews()">
+                                    <i class="fas fa-sync me-1"></i>Atualizar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card card-dark">
+                    <div class="card-body">
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button class="btn btn-gradient" onclick="showStatistics()">
+                                <i class="fas fa-chart-bar me-1"></i>Estatísticas
+                            </button>
+                            <button class="btn btn-outline-light" onclick="showSystemLogs()">
+                                <i class="fas fa-list me-1"></i>Ver Logs
+                            </button>
+                            <button class="btn btn-outline-light" onclick="exportNews()">
+                                <i class="fas fa-download me-1"></i>Exportar
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -58,48 +247,304 @@
                     <div class="spinner-border text-primary" role="status">
                         <span class="visually-hidden">Carregando...</span>
                     </div>
-                    <p class="mt-2 text-muted">Buscando notícias pendentes de curadoria...</p>
+                    <p class="mt-2 text-muted">Carregando notícias coletadas...</p>
                 </div>
                 
                 <div id="no-news-message" class="alert alert-info d-none">
-                    <i class="fas fa-check-circle me-2"></i>Não há notícias pendentes para curadoria no momento!
+                    <i class="fas fa-info-circle me-2"></i>Nenhuma notícia coletada encontrada!
                 </div>
                 
                 <div id="news-list"></div>
             </div>
 
             <div class="col-md-4">
-                <!-- Sidebar -->
+                <!-- Estatísticas -->
                 <div class="card">
                     <div class="card-header">
-                        <h6><i class="fas fa-fire me-2"></i>Mais Populares</h6>
+                        <h6><i class="fas fa-chart-bar me-2"></i>Estatísticas</h6>
                     </div>
                     <div class="card-body">
-                        <ul class="list-unstyled">
-                            <li class="mb-2"><a href="#">Como clonar sua voz em 3 passos</a></li>
-                            <li class="mb-2"><a href="#">Guia completo de estilos de fala</a></li>
-                            <li class="mb-2"><a href="#">Melhores vozes para publicidade</a></li>
-                            <li class="mb-2"><a href="#">Tutorial MiniDAW para iniciantes</a></li>
-                        </ul>
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <div class="border rounded p-2 mb-2">
+                                    <div class="fw-bold text-primary" id="stat-total">0</div>
+                                    <small>Total</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="border rounded p-2 mb-2">
+                                    <div class="fw-bold text-success" id="stat-recent">0</div>
+                                    <small>24h</small>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
+                <!-- Status do Sistema -->
                 <div class="card mt-4">
                     <div class="card-header">
-                        <h6><i class="fas fa-tags me-2"></i>Categorias</h6>
+                        <h6><i class="fas fa-cogs me-2"></i>Status do Sistema</h6>
                     </div>
                     <div class="card-body">
-                        <ul class="list-unstyled">
-                            <li class="mb-2"><a href="#">Atualizações</a></li>
-                            <li class="mb-2"><a href="#">Tutoriais</a></li>
-                            <li class="mb-2"><a href="#">Cases de Sucesso</a></li>
-                            <li class="mb-2"><a href="#">Tecnologia</a></li>
-                        </ul>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Agente:</span>
+                            <span class="badge" id="agent-status">Verificando...</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <span>Supabase:</span>
+                            <span class="badge" id="supabase-status">Verificando...</span>
+                        </div>
+                        <button class="btn btn-sm btn-outline-primary w-100 mt-3" onclick="updateSystemStatus()">
+                            <i class="fas fa-sync me-1"></i>Atualizar Status
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Modal de Estatísticas -->
+    <div class="modal fade" id="statisticsModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Estatísticas do Sistema</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="statistics-content">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status"></div>
+                        <p class="mt-2">Carregando estatísticas...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Logs -->
+    <div class="modal fade" id="logsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Logs do Sistema</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="logs-content">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status"></div>
+                        <p class="mt-2">Carregando logs...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentNews = [];
+
+        function loadCollectedNews() {
+            document.getElementById('news-loading').classList.remove('d-none');
+            document.getElementById('no-news-message').classList.add('d-none');
+            
+            fetch('/api/curadoria/noticias')
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('news-loading').classList.add('d-none');
+                    
+                    if (data.success && data.posts.length > 0) {
+                        currentNews = data.posts;
+                        renderCollectedNews(data.posts);
+                        document.getElementById('stat-total').textContent = data.count;
+                    } else {
+                        document.getElementById('no-news-message').classList.remove('d-none');
+                        document.getElementById('stat-total').textContent = '0';
+                    }
+                })
+                .catch(err => {
+                    document.getElementById('news-loading').classList.add('d-none');
+                    alert('Erro ao carregar notícias!');
+                    console.error(err);
+                });
+        }
+
+        function renderCollectedNews(posts) {
+            const list = document.getElementById('news-list');
+            list.innerHTML = '';
+            
+            posts.forEach(post => {
+                const dateHtml = new Date(post.created_at).toLocaleDateString('pt-BR');
+                const card = document.createElement('div');
+                card.className = 'card mb-4 border-success shadow-sm';
+                card.innerHTML = `
+                    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                        <span class="badge bg-dark">COLETADA</span>
+                        <small>Fonte: ${post.metadata?.source || 'Desconhecida'}</small>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">${post.title}</h5>
+                        <p class="text-muted mb-2"><small>Coletada em ${dateHtml} | Categoria: ${post.category || 'Geral'}</small></p>
+                        <p class="card-text">${post.content}</p>
+                        <div class="d-flex gap-2 mt-3">
+                            <button class="btn btn-primary btn-sm" onclick="viewNewsDetails('${post.id}')">
+                                <i class="fas fa-eye me-1"></i>Ver Detalhes
+                            </button>
+                            <a href="${post.metadata?.url || '#'}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-external-link-alt me-1"></i>Ver Original
+                            </a>
+                        </div>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        function showStatistics() {
+            document.getElementById('statistics-content').innerHTML = `
+                <div class="text-center">
+                    <div class="spinner-border" role="status"></div>
+                    <p class="mt-2">Carregando estatísticas...</p>
+                </div>
+            `;
+            
+            fetch('/api/news/statistics')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        const stats = data.statistics;
+                        document.getElementById('statistics-content').innerHTML = `
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6><i class="fas fa-newspaper me-2"></i>Notícias</h6>
+                                    <ul class="list-unstyled">
+                                        <li><strong>Total:</strong> ${stats.total_news}</li>
+                                        <li><strong>Últimas 24h:</strong> ${stats.recent_news_24h}</li>
+                                        <li><strong>Total de Ciclos:</strong> ${stats.total_cycles}</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6><i class="fas fa-chart-pie me-2"></i>Por Fonte</h6>
+                                    <ul class="list-unstyled">
+                                        ${Object.entries(stats.news_by_source).map(([source, count]) => 
+                                            `<li><strong>${source}:</strong> ${count}</li>`
+                                        ).join('')}
+                                    </ul>
+                                </div>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(err => {
+                    document.getElementById('statistics-content').innerHTML = '<div class="alert alert-danger">Erro ao carregar estatísticas</div>';
+                });
+            
+            new bootstrap.Modal(document.getElementById('statisticsModal')).show();
+        }
+
+        function showSystemLogs() {
+            document.getElementById('logs-content').innerHTML = `
+                <div class="text-center">
+                    <div class="spinner-border" role="status"></div>
+                    <p class="mt-2">Carregando logs...</p>
+                </div>
+            `;
+            
+            fetch('/api/system/logs')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('logs-content').innerHTML = `
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Ciclo</th>
+                                            <th>Status</th>
+                                            <th>Data</th>
+                                            <th>Tarefa</th>
+                                            <th>Mensagem</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${data.logs.map(log => `
+                                            <tr>
+                                                <td><code>${log.cycle_id}</code></td>
+                                                <td><span class="badge bg-${log.status === 'success' ? 'success' : 'danger'}">${log.status}</span></td>
+                                                <td>${new Date(log.timestamp).toLocaleString('pt-BR')}</td>
+                                                <td>${log.task_name}</td>
+                                                <td>${log.message}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(err => {
+                    document.getElementById('logs-content').innerHTML = '<div class="alert alert-danger">Erro ao carregar logs</div>';
+                });
+            
+            new bootstrap.Modal(document.getElementById('logsModal')).show();
+        }
+
+        function updateSystemStatus() {
+            const agentStatusEl = document.getElementById('agent-status');
+            const supabaseStatusEl = document.getElementById('supabase-status');
+            
+            agentStatusEl.textContent = 'Atualizando...';
+            agentStatusEl.className = 'badge bg-warning';
+            supabaseStatusEl.textContent = 'Verificando...';
+            supabaseStatusEl.className = 'badge bg-warning';
+            
+            fetch('/api/system/status')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        const status = data.status;
+                        
+                        // Status do agente
+                        agentStatusEl.textContent = status.agent;
+                        if (status.agent === 'OK') {
+                            agentStatusEl.className = 'badge bg-success';
+                        } else if (status.agent === 'Com Erros') {
+                            agentStatusEl.className = 'badge bg-danger';
+                        } else {
+                            agentStatusEl.className = 'badge bg-warning';
+                        }
+                        
+                        // Status do Supabase
+                        supabaseStatusEl.textContent = status.supabase_connected ? 'Conectado' : 'Erro';
+                        supabaseStatusEl.className = status.supabase_connected ? 'badge bg-success' : 'badge bg-danger';
+                        
+                        // Atualizar estatísticas
+                        document.getElementById('stat-recent').textContent = status.recent_news_24h;
+                    }
+                })
+                .catch(err => {
+                    agentStatusEl.textContent = 'Erro';
+                    agentStatusEl.className = 'badge bg-danger';
+                    supabaseStatusEl.textContent = 'Erro';
+                    supabaseStatusEl.className = 'badge bg-danger';
+                });
+        }
+
+        function viewNewsDetails(newsId) {
+            const news = currentNews.find(n => n.id === newsId);
+            if (!news) return;
+            
+            alert(`Detalhes da Notícia:\n\nTítulo: ${news.title}\nFonte: ${news.metadata?.source}\nCategoria: ${news.category}\nColetada em: ${new Date(news.created_at).toLocaleString('pt-BR')}\n\nURL: ${news.metadata?.url}`);
+        }
+
+        // Carregar notícias ao abrir a página
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCollectedNews();
+            updateSystemStatus();
+        });
+    </script>
+</body>
+</html>
 
     <!-- Footer -->
     <footer class="mt-5 py-4 bg-dark text-white">
@@ -224,12 +669,15 @@
                         <h5 class="card-title">${post.title}</h5>
                         <p class="text-muted mb-2"><small>Adicionado em ${dateHtml} | Categoria: ${post.category}</small></p>
                         <p class="card-text">${post.content}</p>
-                        <div class="d-flex gap-2 mt-3">
+                        <div class="d-flex gap-2 mt-3 flex-wrap">
                             <button class="btn btn-primary" onclick="openEditModal('${post.id}')">
                                 <i class="fas fa-edit me-1"></i>Revisar / Editar
                             </button>
                             <button class="btn btn-success" onclick="quickPublish('${post.id}')">
                                 <i class="fas fa-check me-1"></i>Aprovar (Direto)
+                            </button>
+                            <button class="btn btn-info text-white" onclick="publishToNewPost('${post.id}', '${post.title.replace(/'/g, '').replace(/"/g, '')}', '${post.content ? post.content.substring(0,200).replace(/'/g, '').replace(/"/g, '') : ''}', '${post.image_url || ''}')">
+                                <i class="fas fa-broadcast-tower me-1"></i>NewPost-IA
                             </button>
                             <button class="btn btn-outline-danger" onclick="rejectPost('${post.id}')">
                                 <i class="fas fa-trash me-1"></i>Descartar
@@ -350,7 +798,7 @@
                     editModal.hide();
                     removePostFromList(id);
                 } else {
-                    alert('Erro ao aprovar post: ' + data.error);
+                    alert(`Erro ao aprovar post: ${data.error}`);
                 }
             })
             .catch(e => alert(e))
@@ -393,6 +841,41 @@
         function removePostFromList(id) {
             currentPosts = currentPosts.filter(p => p.id !== id);
             fetchPendingNews(); // reload to show empty state if needed
+        }
+
+        // ============================================================
+        // PUBLICAR NA NEWPOST-IA a partir de uma notícia
+        // ============================================================
+        async function publishToNewPost(postId, title, content, imageUrl) {
+            if (!confirm('Criar um post social na NewPost-IA a partir desta notícia?')) return;
+
+            const btn = event.target.closest('button');
+            if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Enviando...'; }
+
+            try {
+                const res = await fetch('/api/social/create-from-news', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: title,
+                        content: content,
+                        image_url: imageUrl,
+                        auto_caption: true
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    const post = data.post;
+                    const goToSocial = confirm(`✅ Post criado na fila da NewPost-IA!\n\nTítulo: ${post.title}\nStatus: ${post.status}\n\nDeseja ir para o dashboard de Posts Sociais para publicar?`);
+                    if (goToSocial) window.location.href = '/social-posts';
+                } else {
+                    alert('Erro ao criar post social: ' + (data.error || 'Falha desconhecida'));
+                }
+            } catch (e) {
+                alert('Erro de rede: ' + e.message);
+            } finally {
+                if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-broadcast-tower me-1"></i>NewPost-IA'; }
+            }
         }
     </script>
 </body>

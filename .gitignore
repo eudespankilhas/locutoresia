@@ -35,6 +35,11 @@ ENV/
 # Arquivos de ambiente
 .env
 .env.local
+.env.*
+.env.local.*
+.env.fixed
+.env.production
+.env.supabase_fixed
 
 # Arquivos de áudio gerados
 generated_audio/*.wav
@@ -44,6 +49,13 @@ generated_audio/*.mp3
 # Logs
 *.log
 news_log_*.json
+
+# Arquivos de backup com secrets
+*.backup*
+verify_env_fix.py
+check_supabase_*.py
+setup_supabase_tables.py
+list_supabase_tables.py
 
 # Cache
 .cache/

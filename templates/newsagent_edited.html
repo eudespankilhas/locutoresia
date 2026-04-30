@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NewsAgent - Posts Editados</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .approval-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .stats-card {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+        .stats-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+        .news-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+            border-left: 4px solid #28a745;
+        }
+        .news-card:hover {
+            transform: translateY(-5px);
+        }
+        .news-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .news-content {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        .news-meta {
+            font-size: 0.85rem;
+            color: #999;
+            margin-bottom: 15px;
+        }
+        .btn-copy {
+            background: #17a2b8;
+            border: none;
+            color: white;
+            padding: 10px 25px;
+            border-radius: 25px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        .btn-copy:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(23, 162, 184, 0.4);
+        }
+        .btn-approve {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            padding: 10px 25px;
+            border-radius: 25px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        .btn-approve:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .btn-back {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        .btn-back:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.6);
+        }
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: white;
+        }
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+        .toast {
+            background: white;
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease;
+        }
+        .toast.success {
+            border-left: 4px solid #28a745;
+        }
+        .toast.error {
+            border-left: 4px solid #dc3545;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        .edited-badge {
+            background: #28a745;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="approval-container">
+        <!-- Header -->
+        <div class="header-card">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="mb-2">
+                        <i class="fas fa-edit me-2"></i>
+                        NewsAgent - Posts Editados
+                    </h1>
+                    <p class="text-muted mb-0">
+                        Visualize e copie posts editados para publicação na NewPost-IA
+                    </p>
+                </div>
+                <div class="col-md-4">
+                    <div class="stats-card">
+                        <div class="stats-number" id="edited-count">0</div>
+                        <div class="stats-label">Posts Editados</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <div class="loading-spinner" id="loading">
+            <div class="spinner-border text-light" role="status">
+                <span class="visually-hidden">Carregando...</span>
+            </div>
+            <p class="text-white mt-3">Carregando posts editados...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" id="empty-state" style="display: none;">
+            <i class="fas fa-edit"></i>
+            <h3>Nenhum post editado</h3>
+            <p>Nenhum post foi editado ainda.</p>
+            <button class="btn btn-light mt-3" onclick="loadEditedPosts()">
+                <i class="fas fa-sync-alt me-2"></i>Atualizar
+            </button>
+        </div>
+
+        <!-- News List -->
+        <div id="news-list"></div>
+    </div>
+
+    <!-- Botão Voltar ao Início -->
+    <button class="btn-back" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" title="Voltar ao início">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script>
+        let allPosts = [];
+
+        // Carregar posts editados
+        async function loadEditedPosts() {
+            const loading = document.getElementById('loading');
+            const emptyState = document.getElementById('empty-state');
+            const newsList = document.getElementById('news-list');
+            const editedCount = document.getElementById('edited-count');
+
+            loading.style.display = 'block';
+            emptyState.style.display = 'none';
+            newsList.innerHTML = '';
+
+            try {
+                const response = await fetch('/api/social/posts/edited');
+                const data = await response.json();
+
+                loading.style.display = 'none';
+
+                if (data.success) {
+                    allPosts = data.posts;
+                    editedCount.textContent = data.count;
+
+                    if (data.count === 0) {
+                        emptyState.style.display = 'block';
+                    } else {
+                        renderPosts(data.posts);
+                    }
+                } else {
+                    showToast('Erro ao carregar posts: ' + (data.error || 'Erro desconhecido'), 'error');
+                }
+            } catch (error) {
+                loading.style.display = 'none';
+                showToast('Erro ao carregar posts: ' + error.message, 'error');
+            }
+        }
+
+        // Renderizar posts
+        function renderPosts(posts) {
+            const newsList = document.getElementById('news-list');
+            newsList.innerHTML = '';
+
+            posts.forEach(post => {
+                const card = document.createElement('div');
+                card.className = 'news-card';
+                card.id = `post-${post.id}`;
+                card.innerHTML = `
+                    <div class="news-title">
+                        ${escapeHtml(post.title)}
+                        <span class="edited-badge ms-2">Editado</span>
+                    </div>
+                    <div class="news-content" id="content-${post.id}">${escapeHtml(post.content || post.snippet || '')}</div>
+                    <div class="news-meta">
+                        <i class="fas fa-clock me-1"></i>
+                        ${new Date(post.created_at).toLocaleString('pt-BR')}
+                        ${post.metadata?.edited_at ? `<span class="ms-3"><i class="fas fa-edit me-1"></i>Editado em: ${new Date(post.metadata.edited_at).toLocaleString('pt-BR')}</span>` : ''}
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap" id="buttons-${post.id}">
+                        <button class="btn btn-copy" onclick="copyPost('${post.id}')">
+                            <i class="fas fa-copy me-2"></i>Copiar
+                        </button>
+                        <button class="btn btn-approve" onclick="approvePost('${post.id}')">
+                            <i class="fas fa-check me-2"></i>Aprovar
+                        </button>
+                    </div>
+                `;
+                newsList.appendChild(card);
+            });
+        }
+
+        // Copiar texto
+        function copyPost(postId) {
+            const contentDiv = document.getElementById(`content-${postId}`);
+            const textToCopy = contentDiv.innerText;
+
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                showToast('📋 Texto copiado para a área de transferência!', 'success');
+            }).catch(err => {
+                showToast('Erro ao copiar: ' + err.message, 'error');
+            });
+        }
+
+        // Aprovar post
+        async function approvePost(postId) {
+            if (!confirm('Deseja aprovar este post para publicação na NewPost-IA?')) return;
+
+            try {
+                const response = await fetch(`/api/social/posts/${postId}/publish-newsagent`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('✅ Post aprovado e publicado na NewPost-IA!', 'success');
+                    loadEditedPosts();
+                } else {
+                    showToast('Erro ao aprovar: ' + (data.error || 'Erro desconhecido'), 'error');
+                }
+            } catch (error) {
+                showToast('Erro ao aprovar: ' + error.message, 'error');
+            }
+        }
+
+        // Mostrar toast
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <i class="fas ${type === 'success' ? 'fa-check-circle text-success' : 'fa-exclamation-circle text-danger'}"></i>
+                <span>${message}</span>
+            `;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // Escapar HTML
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Carregar ao iniciar
+        document.addEventListener('DOMContentLoaded', () => {
+            loadEditedPosts();
+            
+            // Auto-refresh a cada 30 segundos
+            setInterval(loadEditedPosts, 30000);
+        });
+    </script>
+</body>
+</html>

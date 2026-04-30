@@ -1,0 +1,195 @@
+PATCH para adicionar botões de ação em news-auto-post.html
+
+LOCALIZAR (linhas 768-786):
+                    publicationsList.innerHTML = sortedPublications.map(pub => `
+                        <div style="background: #334155; border-radius: 8px; padding: 12px; margin-bottom: 8px; border-left: 3px solid #4ade80;">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                                <span style="color: #4ade80; font-size: 12px; font-weight: bold;">ID: ${pub.post_id}</span>
+                                <span style="color: #64748b; font-size: 11px;">${new Date(pub.published_at).toLocaleString('pt-BR')}</span>
+                            </div>
+                            <div style="color: #94a3b8; font-size: 11px; margin-bottom: 8px;">
+                                Fonte: ${pub.source || 'Desconhecida'}
+                            </div>
+                            <div style="color: white; font-size: 13px; margin-bottom: 8px; line-height: 1.4;">
+                                ${pub.title || pub.content}
+                            </div>
+                            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                                <span style="background: #14532d; color: #4ade80; font-size: 10px; padding: 2px 6px; border-radius: 4px;">
+                                    NewPost-IA
+                                </span>
+                            </div>
+                        </div>
+                    `).join('');
+
+SUBSTITUIR POR:
+                    publicationsList.innerHTML = sortedPublications.map(pub => `
+                        <div id="pub-${pub.id}" style="background: #334155; border-radius: 8px; padding: 12px; margin-bottom: 8px; border-left: 3px solid #4ade80;">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                                <span style="color: #4ade80; font-size: 12px; font-weight: bold;">ID: ${pub.id || pub.post_id}</span>
+                                <span style="color: #64748b; font-size: 11px;">${new Date(pub.created_at || pub.published_at).toLocaleString('pt-BR')}</span>
+                            </div>
+                            <div style="color: #94a3b8; font-size: 11px; margin-bottom: 8px;">
+                                Fonte: ${pub.source || 'Desconhecida'}
+                            </div>
+                            <div id="title-${pub.id}" style="color: white; font-size: 13px; margin-bottom: 8px; line-height: 1.4; font-weight: bold;">
+                                ${pub.title || 'Sem título'}
+                            </div>
+                            <div id="content-${pub.id}" style="color: #cbd5e1; font-size: 12px; margin-bottom: 8px; line-height: 1.4;">
+                                ${pub.content || pub.summary || ''}
+                            </div>
+                            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px;">
+                                <span style="background: #14532d; color: #4ade80; font-size: 10px; padding: 2px 6px; border-radius: 4px;">
+                                    ${pub.status || 'draft'}
+                                </span>
+                                ${pub.image_url ? '<span style="background: #1e3a5f; color: #60a5fa; font-size: 10px; padding: 2px 6px; border-radius: 4px;">🖼️ Imagem</span>' : ''}
+                            </div>
+                            <!-- BOTÕES DE AÇÃO -->
+                            <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; padding-top: 10px; border-top: 1px solid #475569;">
+                                <button onclick="editPublication('${pub.id}', '${encodeURIComponent(pub.title || '')}', '${encodeURIComponent(pub.content || pub.summary || '')}')" 
+                                    style="background: #3b82f6; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                    ✏️ Editar
+                                </button>
+                                <button onclick="savePublication('${pub.id}')" 
+                                    style="background: #10b981; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                    💾 Salvar
+                                </button>
+                                <button onclick="approvePublication('${pub.id}')" 
+                                    style="background: #f59e0b; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                    ✓ Aprovar
+                                </button>
+                                <button onclick="postToNewPostIA('${pub.id}', '${encodeURIComponent(pub.title || '')}', '${encodeURIComponent(pub.content || pub.summary || '')}', '${pub.image_url || ''}')" 
+                                    style="background: #8b5cf6; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                    🚀 Postar
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
+
+ADICIONAR FUNÇÕES JAVASCRIPT ANTES DE </script>:
+
+        // ===== FUNÇÕES DE AÇÃO PARA PUBLICAÇÕES =====
+        
+        function editPublication(id, encodedTitle, encodedContent) {
+            const title = decodeURIComponent(encodedTitle);
+            const content = decodeURIComponent(encodedContent);
+            
+            // Criar modal de edição
+            const modal = document.createElement('div');
+            modal.id = 'edit-modal';
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000;';
+            modal.innerHTML = `
+                <div style="background: #1e293b; padding: 24px; border-radius: 12px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;">
+                    <h3 style="color: white; margin-bottom: 16px;">✏️ Editar Publicação</h3>
+                    <div style="margin-bottom: 12px;">
+                        <label style="color: #94a3b8; font-size: 12px; display: block; margin-bottom: 4px;">Título</label>
+                        <input type="text" id="edit-title" value="${title.replace(/"/g, '&quot;')}" style="width: 100%; padding: 8px; background: #334155; border: 1px solid #475569; border-radius: 4px; color: white; font-size: 13px;">
+                    </div>
+                    <div style="margin-bottom: 16px;">
+                        <label style="color: #94a3b8; font-size: 12px; display: block; margin-bottom: 4px;">Conteúdo</label>
+                        <textarea id="edit-content" rows="6" style="width: 100%; padding: 8px; background: #334155; border: 1px solid #475569; border-radius: 4px; color: white; font-size: 13px; resize: vertical;">${content}</textarea>
+                    </div>
+                    <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                        <button onclick="closeEditModal()" style="background: #64748b; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Cancelar</button>
+                        <button onclick="saveEdit('${id}')" style="background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Salvar Alterações</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            addLog(`✏️ Editando publicação ${id}`, 'info');
+        }
+        
+        function closeEditModal() {
+            const modal = document.getElementById('edit-modal');
+            if (modal) modal.remove();
+        }
+        
+        async function saveEdit(id) {
+            const title = document.getElementById('edit-title').value;
+            const content = document.getElementById('edit-content').value;
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/publications/${id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, content })
+                });
+                
+                if (response.ok) {
+                    addLog(`✅ Publicação ${id} atualizada!`, 'success');
+                    closeEditModal();
+                    loadPublications();
+                } else {
+                    throw new Error('Erro ao atualizar');
+                }
+            } catch (error) {
+                addLog(`❌ Erro ao salvar: ${error.message}`, 'error');
+            }
+        }
+        
+        async function savePublication(id) {
+            try {
+                const response = await fetch(`${API_BASE}/api/publications/${id}/save`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (response.ok) {
+                    addLog(`💾 Publicação ${id} salva!`, 'success');
+                } else {
+                    throw new Error('Erro ao salvar');
+                }
+            } catch (error) {
+                addLog(`❌ Erro: ${error.message}`, 'error');
+            }
+        }
+        
+        async function approvePublication(id) {
+            try {
+                const response = await fetch(`${API_BASE}/api/publications/${id}/approve`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (response.ok) {
+                    addLog(`✓ Publicação ${id} aprovada!`, 'success');
+                    loadPublications();
+                } else {
+                    throw new Error('Erro ao aprovar');
+                }
+            } catch (error) {
+                addLog(`❌ Erro: ${error.message}`, 'error');
+            }
+        }
+        
+        async function postToNewPostIA(id, encodedTitle, encodedContent, imageUrl) {
+            const title = decodeURIComponent(encodedTitle);
+            const content = decodeURIComponent(encodedContent);
+            
+            try {
+                addLog(`🚀 Postando ${id} na NewPost-IA...`, 'info');
+                
+                const response = await fetch(`${API_BASE}/api/newpost/publish`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: title,
+                        content: content,
+                        image_url: imageUrl,
+                        hashtags: ['notícia', 'Brasil'],
+                        source_id: id
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    addLog(`✅ Postado com sucesso! ID: ${result.post_id}`, 'success');
+                    // Atualizar status na lista
+                    await approvePublication(id);
+                } else {
+                    throw new Error(result.error || 'Erro ao publicar');
+                }
+            } catch (error) {
+                addLog(`❌ Erro ao postar: ${error.message}`, 'error');
+            }
+        }

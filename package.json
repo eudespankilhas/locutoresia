@@ -1,0 +1,16 @@
+{
+  "name": "locutores-ia",
+  "version": "1.0.0",
+  "description": "Locutores IA - Sistema de automação de notícias",
+  "scripts": {
+    "build": "echo 'Build completed'",
+    "start": "python api/index.py"
+  },
+  "dependencies": {
+    "@radix-ui/react-label": "^2.1.8",
+    "@radix-ui/react-switch": "^1.2.6"
+  },
+  "devDependencies": {
+    "@vercel/python": "^3.0.0"
+  }
+}
