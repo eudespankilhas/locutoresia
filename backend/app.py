@@ -66,16 +66,20 @@ spec.loader.exec_module(news_agent_module)
 NewsAgent = news_agent_module.NewsAgent
 HAS_NEWS_AGENT = True
 
-# DEBUG — verificar se execute_collection existe
-_agent_test = NewsAgent()
-_methods = [m for m in dir(_agent_test) if not m.startswith('_')]
-print(f"✅ NewsAgent carregado de: {NewsAgent.__module__}")
-print(f"✅ Métodos disponíveis: {_methods}")
-
-if not hasattr(_agent_test, 'execute_collection'):
-    print("❌ ALERTA: execute_collection NÃO encontrado!")
-else:
-    print("✅ execute_collection encontrado com sucesso")
+# DEBUG — verificar se execute_collection existe (apenas em desenvolvimento, não no Vercel)
+if not os.environ.get('VERCEL'):
+    try:
+        _agent_test = NewsAgent()
+        _methods = [m for m in dir(_agent_test) if not m.startswith('_')]
+        print(f"✅ NewsAgent carregado de: {NewsAgent.__module__}")
+        print(f"✅ Métodos disponíveis: {_methods}")
+        
+        if not hasattr(_agent_test, 'execute_collection'):
+            print("❌ ALERTA: execute_collection NÃO encontrado!")
+        else:
+            print("✅ execute_collection encontrado com sucesso")
+    except Exception as e:
+        print(f"⚠️ Erro ao testar NewsAgent (apenas debug): {e}")
 
 # Importar funções de correção das APIs de notícias
 try:
