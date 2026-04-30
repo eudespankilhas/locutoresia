@@ -5,7 +5,7 @@ import uuid
 import glob
 import json
 import requests
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Forçar UTF-8 no stdout (necessário no Windows)
 if hasattr(sys.stdout, 'reconfigure'):
@@ -13,6 +13,18 @@ if hasattr(sys.stdout, 'reconfigure'):
 if hasattr(sys.stderr, 'reconfigure'):
     sys.stderr.reconfigure(encoding='utf-8')
 
+# Carregar variáveis de ambiente do arquivo .env (apenas em desenvolvimento)
+try:
+    from dotenv import load_dotenv
+    # Carregar .env do diretório pai (raiz do projeto)
+    env_path = os.path.join(os.path.dirname(__file__), '..', '.env')
+    if os.path.exists(env_path):
+        load_dotenv(env_path)
+        print(f"✅ Arquivo .env carregado: {env_path}")
+    else:
+        print(f"⚠️ Arquivo .env não encontrado em: {env_path}")
+except ImportError:
+    print("⚠️ python-dotenv não instalado, usando variáveis de ambiente do sistema")
 
 # No Vercel, o diretório de execução principal pode não ser 'backend'
 # Precisamos adicionar o diretório atual (onde está app.py) ao sys.path explicitamente
@@ -28,6 +40,14 @@ app = Flask(__name__,
            template_folder=os.path.join(base_dir, 'templates'),
            static_folder=os.path.join(base_dir, 'static'))
 
+# Configurar CORS manualmente
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,apikey')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH,OPTIONS')
+    return response
+
 # Configurações de upload - usar /tmp no Vercel
 if os.environ.get('VERCEL'):
     app.config['UPLOAD_FOLDER'] = '/tmp/generated_audio'
@@ -38,33 +58,24 @@ else:
 
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-# Importar agente de notícias de forma segura
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-try:
-    from news_agent import NewsAgent
-    HAS_NEWS_AGENT = True
-except ImportError as e:
-    print(f"Aviso: Não foi possível importar news_agent: {e}")
-    HAS_NEWS_AGENT = False
-    
-    class NewsAgent:
-        def run_cycle(self):
-            return {"success": False, "message": "Agente de notícias disponivel."}
-        def get_sources(self):
-            return {"success": False, "message": "NewsAgent não disponível"}
-        def get_cached_news(self, limit=50):
-            return {"success": False, "message": "NewsAgent não disponível"}
-        def get_status(self):
-            return {"success": False, "message": "NewsAgent não disponível"}
-        def health_check(self):
-            return {"success": False, "message": "NewsAgent não disponível"}
-        def execute_collection(self, enabled_sources, categories, limit=50):
-            return {"success": False, "message": "NewsAgent não disponível"}
-        def collect_from_source(self, source, category):
-            return []
-except Exception as e:
-    print(f"NewsAgent não disponível: {e}")
-    NewsAgent = None
+# Importar agente de notícias de forma segura - usar caminho absoluto para garantir arquivo correto
+import importlib.util
+spec = importlib.util.spec_from_file_location("news_agent", os.path.join(os.path.dirname(__file__), '..', 'news_agent.py'))
+news_agent_module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(news_agent_module)
+NewsAgent = news_agent_module.NewsAgent
+HAS_NEWS_AGENT = True
+
+# DEBUG — verificar se execute_collection existe
+_agent_test = NewsAgent()
+_methods = [m for m in dir(_agent_test) if not m.startswith('_')]
+print(f"✅ NewsAgent carregado de: {NewsAgent.__module__}")
+print(f"✅ Métodos disponíveis: {_methods}")
+
+if not hasattr(_agent_test, 'execute_collection'):
+    print("❌ ALERTA: execute_collection NÃO encontrado!")
+else:
+    print("✅ execute_collection encontrado com sucesso")
 
 # Importar funções de correção das APIs de notícias
 try:
@@ -112,6 +123,11 @@ def contato():
 def draft_approval():
     """Dashboard de Rascunhos & Aprovação"""
     return render_template('draft_approval.html')
+
+@app.route('/news-auto-post')
+def news_auto_post():
+    """Dashboard de Automação de Notícias - News Auto Post"""
+    return render_template('news-auto-post.html')
 
 @app.route('/api/news/collect', methods=['POST'])
 def collect_news():
@@ -162,7 +178,22 @@ def execute_news():
             limit=limit
         )
         
-        return jsonify(result)
+        # Adaptar formato para o frontend do News Auto Post
+        if result.get('success') and result.get('news') and len(result['news']) > 0:
+            first_news = result['news'][0]
+            return jsonify({
+                "success": True,
+                "title": first_news.get('title', ''),
+                "summary": first_news.get('summary', first_news.get('content', '')),
+                "source": first_news.get('source', 'Desconhecida'),
+                "url": first_news.get('url', ''),
+                "total": result.get('total_news', 0)
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "error": "Nenhuma notícia encontrada"
+            })
             
     except Exception as e:
         return jsonify({
@@ -368,7 +399,7 @@ def test_routes():
         return jsonify({
             "success": True,
             "routes": routes_status,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         })
     except Exception as e:
         return jsonify({
@@ -764,7 +795,7 @@ def voxcraft_metadata(session_id):
 
 @app.route('/api/voxcraft/complete', methods=['POST', 'OPTIONS'])
 def voxcraft_complete():
-    """Notifica conclusão da geração de áudio"""
+    """Notifica conclusão da geração de áudio — FIX: Atualiza BD Supabase"""
     if request.method == 'OPTIONS':
         response = make_response()
         response.headers.add('Access-Control-Allow-Origin', '*')
@@ -786,11 +817,56 @@ def voxcraft_complete():
         if session_id not in voxcraft_sessions:
             return jsonify({'error': 'Sessão não encontrada'}), 404
         
-        # Atualiza sessão
+        # Atualiza sessão em memória
         session = voxcraft_sessions[session_id]
         session['status'] = 'completed'
         session['audio_filename'] = audio_filename
         session['completed_at'] = datetime.now().isoformat()
+        
+        # ✅ FIX CRÍTICA: Atualizar post no banco de dados Supabase
+        post_id = session.get('post_id')
+        if post_id:
+            try:
+                supabase_url = os.getenv("SUPABASE_URL", "").rstrip('/')
+                supabase_key = os.getenv("SUPABASE_SERVICE_KEY", os.getenv("SUPABASE_ANON_KEY", ""))
+                
+                if not supabase_url or not supabase_key:
+                    print(f"⚠️ Aviso: Credenciais Supabase não configuradas para atualizar post {post_id}")
+                else:
+                    headers = {
+                        "apikey": supabase_key,
+                        "Authorization": f"Bearer {supabase_key}",
+                        "Content-Type": "application/json"
+                    }
+                    
+                    # Preparar dados para UPDATE
+                    update_data = {
+                        "status": "published",  # ✅ Muda de 'draft' para 'published'
+                        "audio_filename": audio_filename,
+                        "updated_at": datetime.now(timezone.utc).isoformat()
+                    }
+                    
+                    # PATCH no Supabase
+                    response = requests.patch(
+                        f"{supabase_url}/rest/v1/posts?id=eq.{post_id}",
+                        json=update_data,
+                        headers=headers,
+                        timeout=10
+                    )
+                    
+                    if response.status_code in (200, 204):
+                        print(f"✅ Post {post_id} atualizado para published")
+                        print(f"   → status: 'draft' → 'published'")
+                        print(f"   → audio_filename: {audio_filename}")
+                    else:
+                        print(f"❌ Erro ao atualizar post {post_id}")
+                        print(f"   → Status: {response.status_code}")
+                        print(f"   → Response: {response.text[:200]}")
+                        
+            except Exception as e:
+                print(f"❌ Erro crítico ao atualizar post {post_id} no Supabase")
+                print(f"   → Exception: {str(e)}")
+                # Não falhar o callback, mas logar o erro
         
         # Constrói URL de retorno
         return_url = session.get('return_url', '')
@@ -809,7 +885,7 @@ def voxcraft_complete():
         return response
         
     except Exception as e:
-        print(f"Erro em voxcraft_complete: {str(e)}")
+        print(f"❌ Erro em voxcraft_complete: {str(e)}")
         response = jsonify({'error': str(e)}), 500
         if isinstance(response, tuple):
             response[0].headers.add('Access-Control-Allow-Origin', '*')
@@ -1154,7 +1230,6 @@ def api_create_social_post():
         title=data.get('title', ''),
         caption=data.get('caption', ''),
         audio_url=data.get('audio_url', ''),
-        audio_project_id=data.get('audio_project_id', ''),
         image_url=data.get('image_url', ''),
         platforms=data.get('platforms', ['newpost_ia']),
         hashtags=data.get('hashtags', []),
@@ -1251,13 +1326,20 @@ except ImportError:
     from upload_handler import handle_upload, handle_voice_upload
 
 # Importar integração LMNT (usar versão segura para Vercel)
+lmnt_integration = None
 if os.environ.get('VERCEL'):
-    from core.lmnt_voice_cloner_vercel import lmnt_integration
+    try:
+        from core.lmnt_voice_cloner_vercel import lmnt_integration
+    except ImportError:
+        lmnt_integration = None
 else:
     try:
         from backend.lmnt_integration import lmnt_integration
     except ImportError:
-        from lmnt_integration import lmnt_integration
+        try:
+            from lmnt_integration import lmnt_integration
+        except ImportError:
+            lmnt_integration = None
 
 # Endpoints LMNT Integration
 @app.route('/api/lmnt/status', methods=['GET'])
@@ -1742,10 +1824,227 @@ def api_get_scheduled_posts():
         })
         
     except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/api/newpost/publish', methods=['POST'])
+def newpost_publish():
+    """Publica notícia na NewPost-IA via Supabase (tabela newpost_posts)"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "error": "Dados não fornecidos"}), 400
+        
+        # Credenciais do Supabase da NewPost-IA (projeto: ykswhzqdjoshjoaruhqs)
+        newpost_url = os.getenv('NEWPOST_SUPABASE_URL', 'https://ykswhzqdjoshjoaruhqs.supabase.co').rstrip('/')
+        newpost_key = os.getenv('NEWPOST_SUPABASE_SERVICE_KEY', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlrc3doenFkam9zaGpvYXJ1aHFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2MTA4MjYsImV4cCI6MjA4NzE4NjgyNn0.yzezm6VZ5U_O7Txaj8B4_TD0PFVSpjZspYcZ1CYD0jo')
+        newpost_author_id = os.getenv('NEWPOST_AUTHOR_ID', '3a1a93d0-e451-47a4-a126-f1b7375895eb')
+        
+        if not newpost_url or not newpost_key:
+            return jsonify({"success": False, "error": "Credenciais NewPost-IA não configuradas"}), 500
+        
+        # Author ID padrão do NewPost-IA (pankilhas@gmail.com)
+        DEFAULT_AUTHOR_ID = newpost_author_id
+        
+        # Preparar dados para tabela newpost_posts (colunas exatas: titulo, descricao, conteudo, hashtags, autor_id, criado_em, atualizado_em)
+        # Usar UTC para timestamptz do Supabase
+        post_data = {
+            'titulo': data.get('title', ''),
+            'descricao': data.get('content', data.get('summary', ''))[:200],
+            'conteudo': data.get('content', data.get('summary', '')),
+            'hashtags': data.get('hashtags', ['notícia', 'Brasil']),
+            'autor_id': data.get('author_id', DEFAULT_AUTHOR_ID),
+            'criado_em': datetime.now(timezone.utc).isoformat(),
+            'atualizado_em': datetime.now(timezone.utc).isoformat()
+        }
+        
+        # Headers para API REST
+        headers = {
+            'apikey': newpost_key,
+            'Authorization': f'Bearer {newpost_key}',
+            'Content-Type': 'application/json',
+            'Prefer': 'return=representation'
+        }
+        
+        # POST para tabela newpost_posts (dados reais do NewPost-IA e dashboard real)
+        newpost_posts_response = requests.post(
+            f"{newpost_url}/rest/v1/newpost_posts",
+            json=post_data,
+            headers=headers,
+            timeout=30
+        )
+        
+        if newpost_posts_response.status_code not in (200, 201, 204, 409):
+            return jsonify({
+                "success": False,
+                "error": f"Erro ao publicar em newpost_posts: {newpost_posts_response.status_code} - {newpost_posts_response.text}"
+            }), newpost_posts_response.status_code
+        
+        newpost_post_id = None
+        if newpost_posts_response.status_code in (200, 201):
+            try:
+                newpost_posts_result = newpost_posts_response.json()
+                if isinstance(newpost_posts_result, list) and len(newpost_posts_result) > 0:
+                    newpost_post_id = newpost_posts_result[0].get('id')
+            except ValueError:
+                newpost_post_id = None
+        
+        # POST para tabela posts (visível na interface da NewPost-IA)
+        # Estrutura correta: title, content, image_url, author_id, created_at, updated_at, status, published_at, is_ia_generated, source_url
+        now_utc = datetime.now(timezone.utc).isoformat()
+        posts_data = {
+            'title': data.get('title', ''),
+            'content': data.get('content', data.get('summary', '')),
+            'image_url': data.get('image_url', ''),
+            'author_id': DEFAULT_AUTHOR_ID,
+            'created_at': now_utc,
+            'updated_at': now_utc,
+            'published_at': now_utc,
+            'status': 'published',
+            'is_ia_generated': True,
+            'source_url': data.get('url', '')
+        }
+        
+        posts_response = requests.post(
+            f"{newpost_url}/rest/v1/posts",
+            json=posts_data,
+            headers=headers,
+            timeout=30
+        )
+        
+        if posts_response.status_code in (200, 201):
+            result = posts_response.json()
+            if result and len(result) > 0:
+                return jsonify({
+                    "success": True,
+                    "post_id": newpost_post_id or result[0].get('id'),
+                    "message": "Notícia publicada com sucesso na NewPost-IA"
+                })
+        
+        if posts_response.status_code == 409:
+            return jsonify({
+                "success": True,
+                "post_id": newpost_post_id,
+                "message": "Notícia já estava publicada na NewPost-IA (URL duplicada)"
+            })
+        
+        # Se publicarmos em newpost_posts mas falharmos em posts, ainda consideramos como publicado para o dashboard real
+        if newpost_posts_response.status_code in (200, 201, 204):
+            return jsonify({
+                "success": True,
+                "post_id": newpost_post_id,
+                "message": "Notícia publicada na NewPost-IA (newpost_posts), mas houve falha ao gravar em posts. Verifique o dashboard real."
+            })
+        
         return jsonify({
             "success": False,
-            "error": f"Erro ao listar posts: {str(e)}"
-        }), 500
+            "error": f"Erro ao publicar: {posts_response.status_code} - {posts_response.text}"
+        }), posts_response.status_code
+        
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/api/publications', methods=['GET'])
+def list_publications():
+    """Lista publicações do News Auto Post"""
+    try:
+        supabase_url = os.getenv('SUPABASE_URL', 'https://ravpbfkicqkwjxejuzty.supabase.co').rstrip('/')
+        supabase_key = os.getenv('SUPABASE_SERVICE_KEY', os.getenv('SUPABASE_ANON_KEY', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhdnBiZmtpY3Frd2p4ZWp1enR5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzMxNDMwOCwiZXhwIjoyMDkyODkwMzA4fQ.QAHywO5Uu70dmcMQM7t7EslEqZG4y79-kLUIxPR81RM'))
+        
+        if not supabase_url or not supabase_key:
+            return jsonify({"success": False, "error": "Credenciais não configuradas"}), 500
+        
+        headers = {
+            'apikey': supabase_key,
+            'Authorization': f'Bearer {supabase_key}',
+            'Content-Type': 'application/json'
+        }
+        
+        # Buscar posts (todos os posts, não só published)
+        response = requests.get(
+            f"{supabase_url}/rest/v1/posts?order=created_at.desc&limit=50",
+            headers=headers,
+            timeout=10
+        )
+        
+        if response.status_code == 200:
+            posts = response.json()
+            return jsonify({
+                "success": True,
+                "total": len(posts),
+                "publications": posts
+            })
+        
+        return jsonify({
+            "success": False,
+            "error": f"Erro ao buscar publicações: {response.status_code}"
+        }), response.status_code
+        
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/api/publications/<id>', methods=['PATCH'])
+def update_publication(id):
+    """Atualiza uma publicação"""
+    try:
+        data = request.get_json()
+        supabase_url = os.getenv('SUPABASE_URL', 'https://ravpbfkicqkwjxejuzty.supabase.co').rstrip('/')
+        supabase_key = os.getenv('SUPABASE_SERVICE_KEY', os.getenv('SUPABASE_ANON_KEY', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhdnBiZmtpY3Frd2p4ZWp1enR5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzMxNDMwOCwiZXhwIjoyMDkyODkwMzA4fQ.QAHywO5Uu70dmcMQM7t7EslEqZG4y79-kLUIxPR81RM'))
+        
+        headers = {
+            'apikey': supabase_key,
+            'Authorization': f'Bearer {supabase_key}',
+            'Content-Type': 'application/json'
+        }
+        
+        update_data = {}
+        if 'title' in data:
+            update_data['title'] = data['title']
+        if 'content' in data:
+            update_data['content'] = data['content']
+        update_data['updated_at'] = datetime.now().isoformat()
+        
+        response = requests.patch(
+            f"{supabase_url}/rest/v1/posts?id=eq.{id}",
+            json=update_data,
+            headers=headers,
+            timeout=10
+        )
+        
+        if response.status_code == 200:
+            return jsonify({"success": True, "message": "Publicação atualizada"})
+        
+        return jsonify({"success": False, "error": f"Erro: {response.status_code}"}), response.status_code
+        
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/api/publications/<id>/approve', methods=['POST'])
+def approve_publication(id):
+    """Aprova uma publicação"""
+    try:
+        supabase_url = os.getenv('SUPABASE_URL', 'https://ravpbfkicqkwjxejuzty.supabase.co').rstrip('/')
+        supabase_key = os.getenv('SUPABASE_SERVICE_KEY', os.getenv('SUPABASE_ANON_KEY', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhdnBiZmtpY3Frd2p4ZWp1enR5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzMxNDMwOCwiZXhwIjoyMDkyODkwMzA4fQ.QAHywO5Uu70dmcMQM7t7EslEqZG4y79-kLUIxPR81RM'))
+        
+        headers = {
+            'apikey': supabase_key,
+            'Authorization': f'Bearer {supabase_key}',
+            'Content-Type': 'application/json'
+        }
+        
+        response = requests.patch(
+            f"{supabase_url}/rest/v1/posts?id=eq.{id}",
+            json={'status': 'approved', 'updated_at': datetime.now().isoformat()},
+            headers=headers,
+            timeout=10
+        )
+        
+        if response.status_code == 200:
+            return jsonify({"success": True, "message": "Publicação aprovada"})
+        
+        return jsonify({"success": False, "error": f"Erro: {response.status_code}"}), response.status_code
+        
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 # Importar dashboards
 try:
